@@ -28,7 +28,7 @@ public class DiagramFragment extends Fragment {
     private static final String INSTANCESTATE_DIAGRAM_UNIT = "Diagram unit";
     //Default values
     private static final int DEFAULT_COLOR_NAMETEXT = Color.BLACK;
-    private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.WHITE;
+    private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.BLUE;
 
 
     private String name, unit;
