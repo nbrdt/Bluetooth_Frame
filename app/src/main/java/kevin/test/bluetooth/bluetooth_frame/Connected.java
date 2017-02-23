@@ -30,6 +30,7 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.*;
 public class Connected extends Activity {
     private static final String LOG_TAG = "Connected Activity";
     ArduinoBluetoothClient client;
+    private Button refreshButton;
 
     DiagramFragment temperatureDiagram;
     ArrayList<Integer> temperaturWerte = new ArrayList<>();
@@ -43,6 +44,7 @@ public class Connected extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connected);
+        refreshButton = (Button) findViewById(R.id.refreshButton);
 
         String addresse = "" + getIntent().getExtras().getString("addresse");
 
@@ -78,7 +80,7 @@ public class Connected extends Activity {
                         int width = layoutWidth;
                         int height = (int) Math.round(layoutWidth * 0.6);
                         LinearLayout.LayoutParams parms = new LinearLayout.LayoutParams(width, height);
-                        temperatureDiagram = DiagramFragment.newInstance("Temperatur:", height, width, temperaturWerte, -25, 50, "°C"); //
+                        temperatureDiagram = DiagramFragment.newInstance("Temperatur:", height, width, temperaturWerte, -25, 100, "°C"); //
                         fragmentTransaction.add(R.id.activity_connected, temperatureDiagram, "temperaturen");
                         fragmentTransaction.addToBackStack("temperatures");
                         fragmentTransaction.commit();
@@ -92,25 +94,9 @@ public class Connected extends Activity {
                     }
                 });
 
-                //Die Diagramme werden alle 10 sekunden geupdatet
-
-                /*new Timer().scheduleAtFixedRate(new TimerTask() {
-                    @Override
-                    public void run() {
-                        List<DataSet> data = client.getReceivedData();
-                        if (data != null) {
-                            for (DataSet set :
-                                    data) {
-                                temperatureDiagram.addToDiagram(set.getTemperature().intValue());
-                                luftfeuchteDiagram.addToDiagram(set.getHumidity().intValue());
-                            }
-                        }
-                        client.clearReceivedData();
-                    }
-                }, 0, 10000);*/
-
             } catch (BluetoothConnectionStateException e) {
                 Log.e(LOG_TAG, "connection Error", e);
+                Toast.makeText(getApplicationContext(), "could not connect Client", Toast.LENGTH_LONG);
                 finish();
             }
 
@@ -121,7 +107,23 @@ public class Connected extends Activity {
     }
 
 
+    public void refreshButtonClicked(View v) {
+        List<DataSet> received = client.getReceivedData();
+        if (received != null) {
+            client.clearReceivedData();
+            for (DataSet data :
+                    received) {
+                temperatureDiagram.addToDiagram(data.getTemperature().intValue());
+                luftfeuchteDiagram.addToDiagram(data.getTemperature().intValue());
+            }
+            temperatureDiagram.updateDiagram();
+            luftfeuchteDiagram.updateDiagram();
+        }
+    }
 
+    public void disconnectButtonClicked(View v) {
+        finish();
+    }
 
     @Override
     public void onStart() {

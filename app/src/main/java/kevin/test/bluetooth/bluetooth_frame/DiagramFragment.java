@@ -16,7 +16,8 @@ import java.util.ArrayList;
 
 
 /**
- *
+ * @author KI
+ * @version 1.0b
  */
 public class DiagramFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -42,7 +43,7 @@ public class DiagramFragment extends Fragment {
 
 
     public DiagramFragment() {
-
+        //Android developer guides say you should leave an empty constructor and set everything necessary in an static factory
     }
 
     /**
@@ -131,14 +132,7 @@ public class DiagramFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) { //Activity view has been created, diagram may be added
         super.onActivityCreated(savedInstanceState);
-        this.nameView = new TextView(attachContext);
-        nameView.setText(name);
-        nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
-        this.rootView.addView(nameView);
-        setDiagram(new Diagramm(attachContext, height, width, values, min, max, unit));
-        diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
-        diagram.setLayoutParams(new LinearLayout.LayoutParams(width,height));
-        this.rootView.addView(diagram);
+        createLayout();
     }
 
     @Override
@@ -153,7 +147,34 @@ public class DiagramFragment extends Fragment {
     }
 
     public void addToDiagram(Integer valueToAdd) {
-        diagram.addWert(valueToAdd);
+        values.add(valueToAdd);
+    }
+
+    public void updateDiagram() {
+        rootView.removeView(nameView);
+        rootView.removeView(diagram);
+        createLayout();
+    }
+
+    private void createLayout() {
+        drawTextName();
+        drawDiagram();
+    }
+
+    private void drawDiagram() {
+        setDiagram(new Diagramm(attachContext, height, width, values, min, max, unit));
+        diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
+        diagram.setLayoutParams(new LinearLayout.LayoutParams(width, height));
+        this.rootView.addView(diagram);
+    }
+
+    private void drawTextName() {
+        this.nameView = new TextView(attachContext);
+        nameView.setText(name);
+        nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
+        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        nameView.setLayoutParams(params);
+        this.rootView.addView(nameView);
     }
 
 }
