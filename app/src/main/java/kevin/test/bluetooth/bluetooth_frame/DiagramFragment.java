@@ -28,7 +28,7 @@ public class DiagramFragment extends Fragment {
     private static final String INSTANCESTATE_DIAGRAM_UNIT = "Diagram unit";
     //Default values
     private static final int DEFAULT_COLOR_NAMETEXT = Color.BLACK;
-    private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.BLUE;
+    private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.WHITE;
 
 
     private String name, unit;
@@ -98,8 +98,8 @@ public class DiagramFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState){
-        return inflater.inflate(R.layout.fragment_layout_root,container,true);
+                             Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_layout_root, container, false);
     }
 
 
@@ -125,11 +125,10 @@ public class DiagramFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) { //Activity view has been created, diagram may be added
         super.onActivityCreated(savedInstanceState);
-        rootView = (LinearLayout) getActivity().findViewById(R.id.diagramFragmentLinearRoot);
-        TextView title = new TextView(attachContext);
-        title.setTextColor(DEFAULT_COLOR_NAMETEXT);
-        title.setText(name);
-        this.rootView.addView(title);
+        this.nameView = (TextView) getActivity().findViewById(R.id.fragment_textView);
+        this.rootView = (LinearLayout) getActivity().findViewById(R.id.diagramFragmentLinearRoot);
+        nameView.setText(name);
+        nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
         setDiagram(new Diagramm(attachContext, height, width, values, min, max, unit));
         diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
         diagram.setLayoutParams(new LinearLayout.LayoutParams(width,height));
