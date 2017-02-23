@@ -3,7 +3,6 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -21,25 +20,25 @@ import java.util.ArrayList;
  */
 public class DiagramFragment extends Fragment {
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String INSTANCESTATE_DIAGRAM_NAME = "Diagram name";
-    private static final String INSTANCESTATE_DIAGRAM_HEIGHT = "Diagram height";
-    private static final String INSTANCESTATE_DIAGRAM_WIDTH = "Diagram width";
-    private static final String INSTANCESTATE_DIAGRAM_VALUES = "Diagram values";
+    private static final String INSTANCESTATE_DIAGRAM_NAME = "Diagram m_name";
+    private static final String INSTANCESTATE_DIAGRAM_HEIGHT = "Diagram m_height";
+    private static final String INSTANCESTATE_DIAGRAM_WIDTH = "Diagram m_width";
+    private static final String INSTANCESTATE_DIAGRAM_VALUES = "Diagram m_values";
     private static final String INSTANCESTATE_DIAGRAM_MINVALUE = "Diagram minimum value";
     private static final String INSTANCESTATE_DIAGRAM_MAXVALUE = "Diagram maximum value";
-    private static final String INSTANCESTATE_DIAGRAM_UNIT = "Diagram unit";
-    //Default values
+    private static final String INSTANCESTATE_DIAGRAM_UNIT = "Diagram m_unit";
+    //Default m_values
     private static final int DEFAULT_COLOR_NAMETEXT = Color.BLACK;
     private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.WHITE;
 
 
-    private String name, unit;
-    private TextView nameView;
-    private LinearLayout rootView;
-    private Context attachContext;
-    private Diagramm diagram;
-    private ArrayList<Integer> values;
-    private int height, width, min, max;
+    private String m_name, m_unit;
+    private TextView m_nameView;
+    private LinearLayout m_rootView;
+    private Context m_attachContext;
+    private Diagramm m_diagram;
+    private ArrayList<Integer> m_values;
+    private int m_height, m_width, m_min, m_max;
 
 
     public DiagramFragment() {
@@ -48,17 +47,17 @@ public class DiagramFragment extends Fragment {
 
     /**
      *
-     * @param name the Name to be shown
-     * @param diagram the Diagram to show information
+     * @param m_name the Name to be shown
+     * @param m_diagram the Diagram to show information
      * @return a newly created DiagramFragment
      */
     /**
-     * public static DiagramFragment newInstance(String name, Diagramm diagram) {
+     * public static DiagramFragment newInstance(String m_name, Diagramm m_diagram) {
      * DiagramFragment fragment = new DiagramFragment();
      * Bundle args = new Bundle();
-     * args.putString(INSTANCESTATE_DIAGRAM_NAME, name);
+     * args.putString(INSTANCESTATE_DIAGRAM_NAME, m_name);
      * fragment.setArguments(args);
-     * fragment.setDiagram(diagram);
+     * fragment.setDiagram(m_diagram);
      * return fragment;
      * }
      **/
@@ -79,7 +78,7 @@ public class DiagramFragment extends Fragment {
     }
 
     private void setDiagram(Diagramm diagram) {
-        this.diagram = diagram;
+        this.m_diagram = diagram;
     }
 
 
@@ -88,32 +87,32 @@ public class DiagramFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             Bundle args = getArguments();
-            name = args.getString(INSTANCESTATE_DIAGRAM_NAME);
-            height = args.getInt(INSTANCESTATE_DIAGRAM_HEIGHT);
-            width = args.getInt(INSTANCESTATE_DIAGRAM_WIDTH);
-            min = args.getInt(INSTANCESTATE_DIAGRAM_MINVALUE);
-            max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
-            values = args.getIntegerArrayList(INSTANCESTATE_DIAGRAM_VALUES);
-            unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
+            m_name = args.getString(INSTANCESTATE_DIAGRAM_NAME);
+            m_height = args.getInt(INSTANCESTATE_DIAGRAM_HEIGHT);
+            m_width = args.getInt(INSTANCESTATE_DIAGRAM_WIDTH);
+            m_min = args.getInt(INSTANCESTATE_DIAGRAM_MINVALUE);
+            m_max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
+            m_values = args.getIntegerArrayList(INSTANCESTATE_DIAGRAM_VALUES);
+            m_unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
         }
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        rootView = new LinearLayout(container.getContext());
-        rootView.setOrientation(LinearLayout.VERTICAL);
-        rootView.setId(View.NO_ID);
+        m_rootView = new LinearLayout(container.getContext());
+        m_rootView.setOrientation(LinearLayout.VERTICAL);
+        m_rootView.setId(View.NO_ID);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rootView.setLayoutParams(params);
-        return rootView;
+        m_rootView.setLayoutParams(params);
+        return m_rootView;
     }
 
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-        attachContext = context;
+        m_attachContext = context;
     }
 
     /**
@@ -130,7 +129,7 @@ public class DiagramFragment extends Fragment {
      *                           a previous saved state, this is the state.
      */
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) { //Activity view has been created, diagram may be added
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) { //Activity view has been created, m_diagram may be added
         super.onActivityCreated(savedInstanceState);
         createLayout();
     }
@@ -138,21 +137,21 @@ public class DiagramFragment extends Fragment {
     @Override
     public void onDetach() {
         super.onDetach();
-        attachContext = null;
+        m_attachContext = null;
         setDiagram(null);
-        nameView = null;
-        rootView = null;
-        values.clear();
-        values = null;
+        m_nameView = null;
+        m_rootView = null;
+        m_values.clear();
+        m_values = null;
     }
 
     public void addToDiagram(Integer valueToAdd) {
-        values.add(valueToAdd);
+        m_values.add(valueToAdd);
     }
 
     public void updateDiagram() {
-        rootView.removeView(nameView);
-        rootView.removeView(diagram);
+        m_rootView.removeView(m_nameView);
+        m_rootView.removeView(m_diagram);
         createLayout();
     }
 
@@ -162,19 +161,19 @@ public class DiagramFragment extends Fragment {
     }
 
     private void drawDiagram() {
-        setDiagram(new Diagramm(attachContext, height, width, values, min, max, unit));
-        diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
-        diagram.setLayoutParams(new LinearLayout.LayoutParams(width, height));
-        this.rootView.addView(diagram);
+        setDiagram(new Diagramm(m_attachContext, m_height, m_width, m_values, m_min, m_max, m_unit));
+        m_diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
+        m_diagram.setLayoutParams(new LinearLayout.LayoutParams(m_width, m_height));
+        this.m_rootView.addView(m_diagram);
     }
 
     private void drawTextName() {
-        this.nameView = new TextView(attachContext);
-        nameView.setText(name);
-        nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
+        this.m_nameView = new TextView(m_attachContext);
+        m_nameView.setText(m_name);
+        m_nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
         ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        nameView.setLayoutParams(params);
-        this.rootView.addView(nameView);
+        m_nameView.setLayoutParams(params);
+        this.m_rootView.addView(m_nameView);
     }
 
 }

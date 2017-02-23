@@ -29,6 +29,9 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.*;
 
 public class Connected extends Activity {
     private static final String LOG_TAG = "Connected Activity";
+    private static final String FRAGMENT_TAG_TEMPERATURE = "temperature";
+    private static final String FRAGMENT_TAG_HUMIDITY = "humidity";
+
     ArduinoBluetoothClient client;
     private Button refreshButton;
 
@@ -79,16 +82,15 @@ public class Connected extends Activity {
 
                         int width = layoutWidth;
                         int height = (int) Math.round(layoutWidth * 0.6);
-                        LinearLayout.LayoutParams parms = new LinearLayout.LayoutParams(width, height);
                         temperatureDiagram = DiagramFragment.newInstance("Temperatur:", height, width, temperaturWerte, -25, 100, "°C"); //
-                        fragmentTransaction.add(R.id.activity_connected, temperatureDiagram, "temperaturen");
-                        fragmentTransaction.addToBackStack("temperatures");
+                        fragmentTransaction.add(R.id.activity_connected, temperatureDiagram, FRAGMENT_TAG_TEMPERATURE);
+                        fragmentTransaction.addToBackStack(FRAGMENT_TAG_TEMPERATURE);
                         fragmentTransaction.commit();
 
                         fragmentTransaction = fragmentManager.beginTransaction();
                         luftfeuchteDiagram = DiagramFragment.newInstance("Luftfeuchte:",height, width,luftfeuchteWerte,0,100,"%");
-                        fragmentTransaction.add(R.id.activity_connected, luftfeuchteDiagram, "luftfeuchten");
-                        fragmentTransaction.addToBackStack("luftfeuchten");
+                        fragmentTransaction.add(R.id.activity_connected, luftfeuchteDiagram, FRAGMENT_TAG_HUMIDITY);
+                        fragmentTransaction.addToBackStack(FRAGMENT_TAG_HUMIDITY);
                         fragmentTransaction.commit();
 
                     }
@@ -130,8 +132,6 @@ public class Connected extends Activity {
     @Override
     public void onStart() {
         super.onStart();
-
-
     }
 
     @Override

@@ -223,6 +223,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                 }
             } catch (IOException e) {
                 Log.e(LOG_TAG, "unable to read", e);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                Log.e(LOG_TAG, "Too much Data... had to dump received Data", e);
             }
         }
 
