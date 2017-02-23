@@ -67,7 +67,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     /**
      * Copys and returns the received Data since the last call of clear received Data.
-     *
      * @return a List of DataSet's containing the received Data, if there is no received Data available, it will return null.
      * @throws ArduinoProtocolException if an much too high amount of numbers had to be overread and an connection to the wrong device is suspected.
      */
@@ -228,7 +227,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         }
 
         private void recognizeArduinoSend (char[] bufferedInput, int received) {
-            for (Integer i = 0; ((i+1) <received) && ((i+1) <bufferedInput.length); i++) {
+            for (Integer i = 0; ((i + 1) < received) && ((i + 1) < bufferedInput.length); i++) {
                 boolean read = false;
                 switch (bufferedInput[i]) {
                     case (DataSet.ARDUINO_INDICATOR_HUMIDITY): {  // notices a Humidity Indicator -> next has to be corresponding value

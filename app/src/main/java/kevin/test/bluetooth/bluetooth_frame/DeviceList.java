@@ -50,7 +50,7 @@ public class DeviceList extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_device_list);
-        btnPaired = (Button)findViewById(R.id.button);
+        btnPaired = (Button) findViewById(R.id.button_connect);
         deviceList = (ListView)findViewById(R.id.ListView);
         deviceList.setOnItemClickListener(m_afterChoosing);
         btnPaired.setOnClickListener(new View.OnClickListener() {

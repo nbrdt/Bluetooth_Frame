@@ -4,5 +4,6 @@
     <string name="button_refresh_onClick">refreshButtonClicked</string>
     <string name="button_disconnect_defaultText">Disconnect</string>
     <string name="button_disconnect_onClick">disconnectButtonClicked</string>
+    <string name="button_connect_defaultText">Connect</string>
 
 </resources>

@@ -10,7 +10,6 @@ public class ArduinoProtocolException extends RuntimeException {
     public ArduinoProtocolException(String message) {
         super(message);
     }
-
     public ArduinoProtocolException(String message, double falseMessages, double receivedMessages) {
         super(message + " with:" + falseMessages + " false Messages and:" + receivedMessages + " received Messages");
         this.falseMessages = falseMessages;
@@ -19,7 +18,6 @@ public class ArduinoProtocolException extends RuntimeException {
     public ArduinoProtocolException(String message, Throwable cause) {
         super(message, cause);
     }
-
     public double getFalseMessages() {
         return falseMessages;
     }

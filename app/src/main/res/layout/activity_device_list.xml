@@ -10,14 +10,6 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="kevin.test.bluetooth.bluetooth_frame.DeviceList">
 
-    <Button
-        android:text="Button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/textView"
-        android:layout_marginTop="94dp"
-        android:id="@+id/button" />
-
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -32,10 +24,19 @@
 
     <ListView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_marginTop="55dp"
-        android:layout_below="@+id/button"
+        android:layout_height="200dp"
+        android:id="@+id/ListView"
+        android:layout_alignParentBottom="true"
         android:layout_alignParentLeft="true"
-        android:layout_alignParentStart="true"
-        android:id="@+id/ListView" />
+        android:layout_alignParentStart="true" />
+
+    <Button
+        android:text="@string/button_connect_defaultText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/button_connect"
+        android:layout_above="@+id/ListView"
+        android:layout_alignLeft="@+id/TextView"
+        android:layout_alignStart="@+id/TextView"
+        android:layout_marginBottom="46dp" />
 </RelativeLayout>

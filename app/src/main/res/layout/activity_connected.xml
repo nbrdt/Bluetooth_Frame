@@ -11,18 +11,12 @@
     tools:context="kevin.test.bluetooth.bluetooth_frame.Connected"
     android:orientation="vertical">
 
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
         <Button
             android:text="@string/button_refresh_defaultText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/refreshButton"
-            android:onClick="refreshButtonClicked"
+            android:onClick="@string/button_refresh_onClick"
             android:layout_weight="1" />
 
         <Button
@@ -30,7 +24,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/button2"
-            android:onClick="disconnectButtonClicked"
+            android:onClick="@string/button_disconnect_onClick"
             android:layout_weight="1" />
-    </LinearLayout>
 </LinearLayout>
