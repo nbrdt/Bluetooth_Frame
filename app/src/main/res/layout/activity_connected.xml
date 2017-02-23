@@ -11,9 +11,5 @@
     tools:context="kevin.test.bluetooth.bluetooth_frame.Connected"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/layout"></LinearLayout>
+
 </LinearLayout>

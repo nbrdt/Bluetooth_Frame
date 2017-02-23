@@ -3,6 +3,7 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -99,7 +100,12 @@ public class DiagramFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_layout_root, container, false);
+        rootView = new LinearLayout(container.getContext());
+        rootView.setOrientation(LinearLayout.VERTICAL);
+        rootView.setId(View.NO_ID);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        rootView.setLayoutParams(params);
+        return rootView;
     }
 
 
@@ -125,10 +131,10 @@ public class DiagramFragment extends Fragment {
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) { //Activity view has been created, diagram may be added
         super.onActivityCreated(savedInstanceState);
-        this.nameView = (TextView) getActivity().findViewById(R.id.fragment_textView);
-        this.rootView = (LinearLayout) getActivity().findViewById(R.id.diagramFragmentLinearRoot);
+        this.nameView = new TextView(attachContext);
         nameView.setText(name);
         nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
+        this.rootView.addView(nameView);
         setDiagram(new Diagramm(attachContext, height, width, values, min, max, unit));
         diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
         diagram.setLayoutParams(new LinearLayout.LayoutParams(width,height));
