@@ -65,11 +65,17 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         return new NFK_ArduinoBluetoothClient();
     }
 
+    /**
+     * Copys and returns the received Data since the last call of clear received Data.
+     *
+     * @return a List of DataSet's containing the received Data, if there is no received Data available, it will return null.
+     * @throws ArduinoProtocolException if an much too high amount of numbers had to be overread and an connection to the wrong device is suspected.
+     */
     @Override
-    public List<DataSet> getReceivedData  () {
-        /*if (((double)m_falseProtocolSinceClear/m_readSinceClear) >=((double) 0.8)) {
-            throw new ArduinoProtocolException("Giant number of misreads - wrong device connected");
-        }*/
+    public List<DataSet> getReceivedData() {
+        if (((double) m_falseProtocolSinceClear / m_readSinceClear) >= ((double) 0.8)) {
+            throw new ArduinoProtocolException("Giant number of misreads - wrong device connected", m_falseProtocolSinceClear, m_readSinceClear);
+        }
         if (m_receivedData.isEmpty()) {
             return null;
         }
@@ -222,7 +228,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         }
 
         private void recognizeArduinoSend (char[] bufferedInput, int received) {
-            for (Integer i=0; ((i+1) <received) && ((i+1) <bufferedInput.length); i++) {
+            for (Integer i = 0; ((i+1) <received) && ((i+1) <bufferedInput.length); i++) {
+                boolean read = false;
                 switch (bufferedInput[i]) {
                     case (DataSet.ARDUINO_INDICATOR_HUMIDITY): {  // notices a Humidity Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
@@ -233,7 +240,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Humids,builder.toString());
-                            m_readSinceClear++;
+                            read = true;
                             i++; // Increments so that he can read the next set of two
                         }
                         else {
@@ -250,7 +257,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Temps, builder.toString());
-                            m_readSinceClear++;
+                            read = true;
                             i++;  // Increments so that he can read the next set of two
                         }
                         else {
@@ -267,7 +274,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Mois, builder.toString());
-                            m_readSinceClear++;
+                            read = true;
                             i++; // Increments so that he can read the next set of two
                         }
                         else {
@@ -275,11 +282,13 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         }
                         break;
                     }
-                    default: {
-                        m_falseProtocolSinceClear++;
-                        break;
-                    }
                     //if he didn't enter any case, something has to be wrong, so he'll increment just one, o look, wheter the next Character is a possible set
+                }
+                if (read) {
+                    m_readSinceClear++;
+                } else {
+                    m_falseProtocolSinceClear++;
+                    m_readSinceClear++;
                 }
             }
         }

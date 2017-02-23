@@ -114,7 +114,7 @@ public class Connected extends Activity {
             for (DataSet data :
                     received) {
                 temperatureDiagram.addToDiagram(data.getTemperature().intValue());
-                luftfeuchteDiagram.addToDiagram(data.getTemperature().intValue());
+                luftfeuchteDiagram.addToDiagram(data.getHumidity().intValue());
             }
             temperatureDiagram.updateDiagram();
             luftfeuchteDiagram.updateDiagram();
