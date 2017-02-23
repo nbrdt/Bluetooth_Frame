@@ -22,7 +22,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/refreshButton"
-            android:onClick="@string/button_refresh_onClick"
+            android:onClick="refreshButtonClicked"
             android:layout_weight="1" />
 
         <Button
@@ -30,7 +30,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/button2"
-            android:onClick="@string/button_disconnect_onClick"
+            android:onClick="disconnectButtonClicked"
             android:layout_weight="1" />
     </LinearLayout>
 </LinearLayout>

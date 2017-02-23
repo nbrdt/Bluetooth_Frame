@@ -28,6 +28,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     private Timer m_MessageTimer;
     private long m_ScheduleRate;
     private long m_TimerOffset;
+    private volatile double m_falseProtocolSinceClear;
+    private volatile double m_readSinceClear;
     private static final String LOG_TAG = "ArduinoBluetoothClient";
 
     private NFK_ArduinoBluetoothClient(long scheduleRate, long timerOffset) {
@@ -38,6 +40,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         m_Writer = null;
         m_ScheduleRate = scheduleRate;
         m_TimerOffset = timerOffset;
+        m_falseProtocolSinceClear = 0;
+        m_readSinceClear = 0;
         resetTimer();
     }
 
@@ -63,6 +67,9 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     @Override
     public List<DataSet> getReceivedData  () {
+        /*if (((double)m_falseProtocolSinceClear/m_readSinceClear) >=((double) 0.8)) {
+            throw new ArduinoProtocolException("Giant number of misreads - wrong device connected");
+        }*/
         if (m_receivedData.isEmpty()) {
             return null;
         }
@@ -75,6 +82,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     public void clearReceivedData(){
         if (!m_receivedData.isEmpty()) {
             m_receivedData.clear();
+            m_falseProtocolSinceClear = 0;
+            m_readSinceClear = 0;
         }
     }
 
@@ -224,6 +233,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Humids,builder.toString());
+                            m_readSinceClear++;
                             i++; // Increments so that he can read the next set of two
                         }
                         else {
@@ -240,6 +250,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Temps, builder.toString());
+                            m_readSinceClear++;
                             i++;  // Increments so that he can read the next set of two
                         }
                         else {
@@ -256,11 +267,16 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 i++;
                             }
                             addStringToList(pm_Mois, builder.toString());
+                            m_readSinceClear++;
                             i++; // Increments so that he can read the next set of two
                         }
                         else {
                             Log.w(LOG_TAG,"Next Character isn't a number: "+Character.toString(bufferedInput[i+1])+" -> Ignoring Indicator.");
                         }
+                        break;
+                    }
+                    default: {
+                        m_falseProtocolSinceClear++;
                         break;
                     }
                     //if he didn't enter any case, something has to be wrong, so he'll increment just one, o look, wheter the next Character is a possible set
