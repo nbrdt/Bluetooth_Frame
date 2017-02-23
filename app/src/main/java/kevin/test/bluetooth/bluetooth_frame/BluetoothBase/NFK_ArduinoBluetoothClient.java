@@ -1,6 +1,7 @@
 package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
 
 import android.util.Log;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -16,7 +17,7 @@ import java.util.Vector;
 import static java.lang.Character.isDigit;
 
 /**
-  *@author Kevin Iselborn
+ *@author KI
   *@version 1.0b from 05.02.2017 in Bluetooth_Frame
  **/
 
@@ -32,19 +33,19 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     private NFK_ArduinoBluetoothClient(long scheduleRate, long timerOffset) {
         super(ARDUINO_CHARSET);
         setListener(new ArduinoConnectionListener());
-        m_MessageTimer = new Timer("Bluetooth-Message Timer");
         m_receivedData = new LinkedList<DataSet>();
         m_Reader = null;
         m_Writer = null;
         m_ScheduleRate = scheduleRate;
         m_TimerOffset = timerOffset;
+        resetTimer();
     }
 
     private NFK_ArduinoBluetoothClient(long scheduleRate) {
         this(scheduleRate,(long)0);
     }
 
-    public NFK_ArduinoBluetoothClient() {
+    private NFK_ArduinoBluetoothClient() {
         this((long)1000);
     }
 
@@ -77,15 +78,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         }
     }
 
-    private List<DataSet> copyData (List<DataSet> toCopy) {
-        List<DataSet> clone = new Vector<DataSet>();
-        for (DataSet data:
-             toCopy) {
-            clone.add(data.clone());
-        }
-        return clone;
-    }
-
     @Override
     public void connectBT(String AddressAndName, int tries) throws BluetoothConnectionStateException {
         super.connectBT(AddressAndName, tries);
@@ -93,10 +85,71 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         m_Reader = m_ConnectionHandler.getInputStream(); //@throws BluetoothConnectionState
         m_Writer = m_ConnectionHandler.getOutputStream(); //@throws BluetoothConnectionState
         Log.i(LOG_TAG,"ready to read InputStreams");
+        resetTimer();
         m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
     }
 
+    @Override
+    public int getConnectionState() {
+        if (m_ConnectionHandler != null) {
+            return m_ConnectionHandler.getConnectionState();
+        } else {
+            throw new NullPointerException("Tried to retrieve Connection-State from an Null-Client. Initialisation failed");
+        }
+    }
 
+    @Override
+    public boolean destroy() {
+        Log.i(LOG_TAG, "destroying ArduinoBluetoothClient");
+        clearReceivedData();
+        m_receivedData = null;
+        cancelTimer();
+        m_MessageTimer = null;
+        m_Reader = null;
+        m_Writer = null;
+        return super.destroy();
+    }
+
+    /**
+     * Inherited Method from NFK_BluetoothClient is, because of Communication Control, not supported in this class.
+     *
+     * @throws UnsupportedOperationException This Class does not support the write method
+     */
+    @Override
+    public void write(String toWrite) throws BluetoothConnectionStateException {
+        throw new UnsupportedOperationException("do not send any Messages to the ArduinoClient, for this may disrupt receiving information");
+    }
+
+    /**
+     * Inherited Method from NFK_BluetoothClient is, because of Communication Control, not supported in this class.
+     *
+     * @throws UnsupportedOperationException This Class does not support the read method.
+     */
+    @Override
+    public int read(char[] buffer) throws BluetoothConnectionStateException {
+        throw new UnsupportedOperationException("you may not interfere with internal reading");
+    }
+
+    private List<DataSet> copyData(List<DataSet> toCopy) {
+        List<DataSet> clone = new Vector<DataSet>();
+        for (DataSet data :
+                toCopy) {
+            clone.add(data.clone());
+        }
+        return clone;
+    }
+
+    private void resetTimer() {
+        cancelTimer();
+        m_MessageTimer = new Timer("Bluetooth-Message Timer");
+    }
+
+    private void cancelTimer() {
+        if (m_MessageTimer != null) {
+            m_MessageTimer.purge();
+            m_MessageTimer.cancel();
+        }
+    }
 
     private class ArduinoConnectionListener extends ConnectionListener {
         ArduinoConnectionListener() {
@@ -105,18 +158,18 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
         @Override
         public void onConnectionTermination() {
-            super.onConnectionTermination();
-            m_MessageTimer.purge();
+            resetTimer();
             m_Reader = null;
             m_Writer = null;
+            super.onConnectionTermination();
         }
 
         @Override
         public void onConnectionLoss() {
-            super.onConnectionLoss();
-            m_MessageTimer.purge();
+            resetTimer();
             m_Reader = null;
             m_Writer = null;
+            super.onConnectionLoss();
         }
     }
 
@@ -166,7 +219,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
-                            for (int j=i;isDigit(bufferedInput[j+1]) && (j+1)<received && (j+1)<bufferedInput.length;j++) {
+                            for (int j = i; isDigit(bufferedInput[j + 1]) && (j + 1) < received && (j + 1) < bufferedInput.length; j++) {
                                 builder.append(bufferedInput[j+1]);
                                 i++;
                             }

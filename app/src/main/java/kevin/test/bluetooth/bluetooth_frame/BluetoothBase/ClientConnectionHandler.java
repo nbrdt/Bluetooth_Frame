@@ -12,10 +12,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.UUID;
-import java.util.Vector;
 
 /**
- * @author Kevin Iselborn
+ * @author KI
  * @version 1.1b
  */
 
@@ -24,9 +23,9 @@ final class ClientConnectionHandler implements BluetoothConstants{
     private BluetoothDevice m_knownDevice;
     private ConnectedThread m_btConnectedThread;
     private ConnectThread m_btConnectThread;
-    private int connectionState;
+    private volatile int m_connectionState;
     private UUID m_AppUUID =
-            UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+            UUID.fromString("00001101-0000-1000-8000-00805F9B34FB"); //somehow this is the only working UUID
     private final static String LOG_TAG = "ClientConnectionHandler";
     private String m_charset;
 
@@ -40,7 +39,7 @@ final class ClientConnectionHandler implements BluetoothConstants{
         m_Listener = listener;
         m_btConnectedThread = null;
         m_btConnectThread = null;
-        connectionState = CONNECTION_STATE_UNCONNECTED;
+        m_connectionState = CONNECTION_STATE_UNCONNECTED;
         m_charset = charset;
     }
 
@@ -50,16 +49,15 @@ final class ClientConnectionHandler implements BluetoothConstants{
      * Will use UTF-8 as default.
      * @param listener The BluetoothListener Object to be invoked on Bluetooth Events
      */
-    public ClientConnectionHandler(BluetoothListener listener) {
+    ClientConnectionHandler(BluetoothListener listener) {
         this(listener,"UTF-8");
     }
 
     /**
      *
-     * This Constructor initialises a new Unconnected Connection Handler.
-     * Will use UTF-8 as default.
+     * This Constructor initialises a new Unconnected Connection Handler, with the given charset and without an predefined listener
      */
-    public ClientConnectionHandler(String charset) {
+    ClientConnectionHandler(String charset) {
         this(null,charset);
     }
 
@@ -68,26 +66,48 @@ final class ClientConnectionHandler implements BluetoothConstants{
      * This Constructor initialises a new Unconnected Connection Handler.
      * Will use UTF-8 as default.
      */
-    public ClientConnectionHandler() {
+    ClientConnectionHandler() {
         this("UTF-8");
     }
 
     /**
-     * Returns the current connectionState of this ClientConnectionHandler
-     * @return the Current ConnectionState as an int
+     * Prepares this ClientConnectionHandler for any connection.
+     * Any running Connection will be cancelled and the ConnectionHandler will prepared for the next connection.
+     * @throws BluetoothConnectionStateException if he had to disconnect and this failed
+     * @throws BluetoothUnnoticedException if there is no registerd BluetoothListener
      */
-    public synchronized int getConnectionState() {
-        return this.connectionState;
+    void prepare() throws BluetoothConnectionStateException {
+        this.checkListener();
+        if (getConnectionState() == CONNECTION_STATE_CONNECTED) {
+            this.disconnect();
+        }
+        this.start(); //restarts properly
+    }
+
+    void destroy() throws BluetoothConnectionStateException {
+        prepare(); // if he wants to destroy himself, he first needs to reset him so far, that he could enter a new Connection
+        m_Listener = null;
+        m_charset = null;
+        m_knownDevice = null;
+    }
+
+    /**
+     * Returns the current ConnectionState of this ClientConnectionHandler
+     * @return the current ConnectionState as an int
+     */
+    synchronized int getConnectionState() {
+        return this.m_connectionState;
     }
 
 
     /**
-     * Will add a BluetoothListener to the internal Vector.
+     * Will set the BluetoothListenerCallback to the given Listener
      * Bluetooth Listener will be called on any defined Events.
      * Note: there has to be at least one kind o Bluetooth Listener on Connect, otherwise an BluetoothUnnoticedException will be thrown.
      * @param Listener BluetoothListener to be registered
+     * @throws NullPointerException in the Event of the Listener being an null Object reference
      */
-    public void setListener(BluetoothListener Listener) {
+    void setListener(BluetoothListener Listener) {
         if (Listener !=null) {
             m_Listener = Listener;
         }
@@ -97,44 +117,14 @@ final class ClientConnectionHandler implements BluetoothConstants{
     }
 
     /**
-     * Prepares ConnectionHandler for the next Connection.
-     * All Threads and Connections will be cancelled.
-     * Reacts as if calling stop with the single difference, that the Connection State won't be set to stopped, but will remain at it's current state.
-     * Will send a onStart Event.
-     */
-    private synchronized void start() {
-        Log.v(LOG_TAG,"sending connectionHandler start Event");
-        checkListener();
-        m_Listener.onStart();
-        this.cancelAll();
-        Log.v(LOG_TAG,"everything has been refreshed, ready to use");
-    }
-
-    /**
-     * Prepares ConnectionHandler for the next Connection.
-     * All Threads and Connections will be cancelled.
-     * Reacts as if calling start with the single difference, that the Connection State will be set to stopped.
-     * Will send a onStop Event.
-     */
-    private synchronized void stop () {
-        Log.v(LOG_TAG,"sending connectionHandler stop Event");
-        checkListener();
-        m_Listener.onStop();
-        cancelAll();
-        Log.v(LOG_TAG,"all Threads have been cancelled, resetting connection State");
-        connectionState = CONNECTION_STATE_STOPPED;
-        Log.d(LOG_TAG,"Connection Handler has been actively stopped");
-    }
-
-    /**
      * Will connect to the given BluetoothDevice and send an onConnect Event.
      * The ConnectionState will be set to Connecting, while the Bluetooth Socket attempts to connect.
-     *  As soon as the connection failed or was established, it will call the appropriate method
+     * As soon as the connection failed or was established, it will call the appropriate method
      * @param btDevice the BluetoothDevice to be connected to this ConnectionHandler
      * @param btUsedAdapter the BluetoothAdapter which has been used to get the BluetoothDevice
      * @throws BluetoothUnnoticedException if there is no registered message receive Event listener
      */
-    public synchronized void connect(BluetoothDevice btDevice, BluetoothAdapter btUsedAdapter) {
+    synchronized void connect(BluetoothDevice btDevice, BluetoothAdapter btUsedAdapter) {
         m_knownDevice = btDevice;
         this.start();
         Log.v(LOG_TAG,"sending connect Event");
@@ -143,10 +133,70 @@ final class ClientConnectionHandler implements BluetoothConstants{
         Log.v(LOG_TAG,"starting Connect Thread");
         m_btConnectThread = new ConnectThread(btDevice,btUsedAdapter);
         Log.v(LOG_TAG,"successfully initialised Connect Thread, starting");
+        Log.v(LOG_TAG, "changing connection state to Connecting");
+        m_connectionState = CONNECTION_STATE_CONNECTING;
         m_btConnectThread.start();
         Log.v(LOG_TAG,"successfully started Connect Thread");
-        Log.v(LOG_TAG,"changing connection state to Connecting");
-        connectionState = CONNECTION_STATE_CONNECTING;
+    }
+
+    /**
+     * Will disconnect the ClientConnectionHandler from the Connected device by stopping it.
+     * Will send an onConnectionTermination Event.
+     * @throws BluetoothConnectionStateException in the Case of the Connection State being unconnected
+     */
+    void disconnect() throws BluetoothConnectionStateException {
+        if (m_connectionState == CONNECTION_STATE_CONNECTED) {
+            m_connectionState = CONNECTION_STATE_UNCONNECTED;
+            Log.d(LOG_TAG, "Sending Event");
+            checkListener();
+            m_Listener.onConnectionTermination();
+            Log.i(LOG_TAG, "finished sending Event");
+            Log.v(LOG_TAG, "Stopping all threads");
+            this.stop();
+        } else {
+            throw new BluetoothConnectionStateException("tried to disconnect an unconnected Client");
+        }
+    }
+
+    void write(String toSend) throws BluetoothConnectionStateException {
+        if (m_connectionState != CONNECTION_STATE_CONNECTED
+                || m_btConnectedThread == null) {
+            throw new BluetoothConnectionStateException(
+                    "there seems to be no connected Bluetoothdevice");
+        } else {
+            Log.v(LOG_TAG, "requested to Send:" + toSend);
+            Log.v(LOG_TAG, "sending on Send Event");
+            checkListener();
+            m_Listener.onSend();
+            Log.v(LOG_TAG, "finished sending Events, sending Message");
+            m_btConnectedThread.write(toSend, false);
+        }
+    }
+
+    BufferedReader getInputStream() throws BluetoothConnectionStateException {
+        if (getConnectionState() == CONNECTION_STATE_CONNECTED) {
+            return m_btConnectedThread.getInputStream();
+        } else {
+            throw new BluetoothConnectionStateException(
+                    "no InputStream available, because there is no connected Device available");
+        }
+    }
+
+    BufferedWriter getOutputStream() throws BluetoothConnectionStateException {
+        if (getConnectionState() == CONNECTION_STATE_CONNECTED) {
+            return m_btConnectedThread.getOutputStream();
+        } else {
+            throw new BluetoothConnectionStateException(
+                    "no OutputStream available, because there is no connected Device available");
+        }
+    }
+
+    int read(char[] buffer) throws BluetoothConnectionStateException {
+        if (m_btConnectThread != null && getConnectionState() == CONNECTION_STATE_CONNECTED) {
+            return m_btConnectedThread.read(buffer);
+        } else {
+            throw new BluetoothConnectionStateException("could not read from an unconnected client");
+        }
     }
 
     /**
@@ -168,7 +218,7 @@ final class ClientConnectionHandler implements BluetoothConstants{
         m_btConnectedThread = new ConnectedThread(btSocket);
         m_btConnectedThread.start();
         Log.v(LOG_TAG,"changing connection state");
-        connectionState = CONNECTION_STATE_CONNECTED;
+        m_connectionState = CONNECTION_STATE_CONNECTED;
         Log.d(LOG_TAG,"successfully started Message receive Listening");
     }
 
@@ -176,12 +226,12 @@ final class ClientConnectionHandler implements BluetoothConstants{
      * This Method is called in the case that it has been impossible to establish an Connection.
      * It will stop the Running ConnectionHandler.
      * Will send a onConnectionFailure Event.
-     * @param closed
+     * @param closed whether or not the BluetoothSocket could be closed or not
      */
     private void connectionFailed (boolean closed) { //TODO react to unclosed Sockets
         Log.e(LOG_TAG,"Some unknown Error has occurred, trying to establish connection to given device failed");
         Log.v(LOG_TAG,"setting State to unconnected");
-        connectionState = CONNECTION_STATE_UNCONNECTED;
+        m_connectionState = CONNECTION_STATE_UNCONNECTED;
         Log.v(LOG_TAG,"sending connection Failure Event");
         checkListener();
         m_Listener.onConnectFailure(closed);
@@ -193,9 +243,9 @@ final class ClientConnectionHandler implements BluetoothConstants{
      * This Method is called in the Case, that the Connected Thread notices, that the Connection has been Lost.
      * Will send a onConnectionLoss Event and will stop the ConnectionHandler
      */
-    private void connectionLost() { 
+    private void connectionLost() {
         Log.e(LOG_TAG,"Some unknown Error has occurred, Connection has been Lost");
-        connectionState = CONNECTION_STATE_UNCONNECTED;
+        m_connectionState = CONNECTION_STATE_UNCONNECTED;
         Log.v(LOG_TAG,"sending Connection Lost Event");
         checkListener();
         m_Listener.onConnectionLoss();
@@ -205,27 +255,45 @@ final class ClientConnectionHandler implements BluetoothConstants{
     }
 
     /**
-     * Will disconnect the ClientConnectionHandler from the Connected device by stopping it.
-     * Will send an onConnectionTermination Event.
-     * @throws BluetoothUnnoticedException in the case that Disconnect might be unnoticed
-     * @throws BluetoothConnectionStateException in the Case of the Connection State being unconnected
+     * Prepares ConnectionHandler for the next Connection.
+     * All Threads and Connections will be cancelled.
+     * Reacts as if calling stop with the single difference, that the Connection State won't be set to stopped, but will remain at it's current state.
+     * Will send a onStart Event.
      */
-    public void disconnect() throws BluetoothConnectionStateException {
-        if (connectionState == CONNECTION_STATE_CONNECTED) {
-            connectionState = CONNECTION_STATE_UNCONNECTED;
-            Log.d(LOG_TAG,"Sending Event");
-            checkListener();
-            m_Listener.onConnectionTermination();
-            Log.i(LOG_TAG,"finished sending Event");
-            Log.v(LOG_TAG,"Stopping all threads");
-            this.stop();
-        }
-        else {
-            throw new BluetoothConnectionStateException("tried to disconnect an unconnected Client");
-        }
+    private synchronized void start() {
+        Log.v(LOG_TAG, "sending connectionHandler start Event");
+        checkListener();
+        m_Listener.onStart();
+        this.cancelAll();
+        Log.v(LOG_TAG, "everything has been refreshed, ready to use");
     }
 
+    /**
+     * Prepares ConnectionHandler for the next Connection.
+     * All Threads and Connections will be cancelled.
+     * Reacts as if calling start with the single difference, that the Connection State will be set to stopped, it therefore sifnals
+     * that some kind of Action has to be taken, until the client may be reconnected.
+     * Will send a onStop Event.
+     */
+    private synchronized void stop() {
+        Log.v(LOG_TAG, "sending connectionHandler stop Event");
+        checkListener();
+        m_Listener.onStop();
+        cancelAll();
+        Log.v(LOG_TAG, "all Threads have been cancelled, resetting connection State");
+        m_connectionState = CONNECTION_STATE_STOPPED;
+        Log.d(LOG_TAG, "Connection Handler has been actively stopped");
+    }
 
+    /**
+     * Checks, whether there is a registered BluetoothListener, or not.
+     *
+     * @throws BluetoothUnnoticedException if there is no registered BluetoothListener
+     */
+    private void checkListener() {
+        if (m_Listener == null)
+            throw new BluetoothUnnoticedException("Can't send Events to an unexisting Listener");
+    }
 
     private void cancelAll() {
         Log.d(LOG_TAG,"attempting to cancel all Threads");
@@ -246,57 +314,8 @@ final class ClientConnectionHandler implements BluetoothConstants{
         Log.d(LOG_TAG,"all Threads held by this ConnectionHandler are now inactive");
     }
 
-    public void write(String toSend) throws BluetoothConnectionStateException {
-        if (connectionState   !=CONNECTION_STATE_CONNECTED
-         || m_btConnectedThread == null) {
-            throw new BluetoothConnectionStateException(
-                    "there seems to be no connected Bluetoothdevice");
-        }
-        else {
-            Log.v(LOG_TAG,"requested to Send:"+toSend);
-            Log.v(LOG_TAG,"sending on Send Event");
-            checkListener();
-            m_Listener.onSend();
-            Log.v(LOG_TAG,"finished sending Events, sending Message");
-            m_btConnectedThread.write(toSend,false);
-        }
-    }
-
-    public BufferedReader getInputStream () throws BluetoothConnectionStateException {
-        if (getConnectionState()==CONNECTION_STATE_CONNECTED) {
-            return m_btConnectedThread.getInputStream();
-        }
-        else {
-            throw new BluetoothConnectionStateException(
-                    "no InputStream available, because there is no connected Device available");
-        }
-    }
-
-    BufferedWriter getOutputStream () throws BluetoothConnectionStateException {
-        if (getConnectionState()==CONNECTION_STATE_CONNECTED) {
-            return m_btConnectedThread.getOutputStream();
-        }
-        else {
-            throw new BluetoothConnectionStateException(
-                    "no OutputStream available, because there is no connected Device available");
-        }
-    }
-
-    public int read(char[] buffer) throws BluetoothConnectionStateException {
-        if (m_btConnectThread!=null && getConnectionState()==CONNECTION_STATE_CONNECTED) {
-            return m_btConnectedThread.read(buffer);
-        }
-        else {
-            throw new BluetoothConnectionStateException("could not read from an unconnected client");
-        }
-    }
-
-    private void checkListener() {
-        if (m_Listener==null) throw new BluetoothUnnoticedException("Can't send Events to an unexisting Listener");
-    }
-
-    /**This Thread will attempt to create a Connected BluetoothSocket to the given Device,
-     * which is given by the Constructor
+    /**This Thread will attempt to create a Connected BluetoothSocket to the Device,
+     * which is given to the Constructor
      * @version 1.1b
      * @author Kevin Iselborn
      */
@@ -308,10 +327,15 @@ final class ClientConnectionHandler implements BluetoothConstants{
         /**
          *
          */
-        public ConnectThread(BluetoothDevice toConnect, BluetoothAdapter usedAdapter) {
+        ConnectThread(BluetoothDevice toConnect, BluetoothAdapter usedAdapter, String name) {
+            super(name);
             pm_btDevice = toConnect;
             pm_btAdapter = usedAdapter;
             attempSocketCreation(false);
+        }
+
+        ConnectThread(BluetoothDevice toConnect, BluetoothAdapter usedAdapter) {
+            this(toConnect, usedAdapter, "Bluetooth " + LOG_TAG);
         }
 
         private void attempSocketCreation(boolean tried)  {
@@ -385,7 +409,7 @@ final class ClientConnectionHandler implements BluetoothConstants{
          * Will close and shut down the BluetoothSocket, but will not terminate references
          * @return whether it cancelled successfully, or not
          */
-        public boolean cancel () {
+        boolean cancel() {
             Log.d(LOG_TAG,"closing Socket");
             try {
                 pm_btSocket.close();
@@ -399,7 +423,7 @@ final class ClientConnectionHandler implements BluetoothConstants{
         /**
          * destructs the Object
          */
-        public void terminate () {
+        void terminate() {
             pm_btDevice = null;
             pm_btSocket = null;
             pm_btAdapter = null;
@@ -415,18 +439,12 @@ final class ClientConnectionHandler implements BluetoothConstants{
         private BufferedReader pm_InputSt;
         private BufferedWriter pm_OutputSt;
         private boolean created;
-        private final String LOG_TAG;
+        private static final String LOG_TAG = "Connection Handler";
 
-        /**
-         * Allocates a new {@code Thread} object. This constructor has the same
-         * effect as Thread
-         * {@code (null, null, gname)}, where {@code gname} is a newly generated
-         * name. Automatically generated names are of the form
-         * {@code "Thread-"+}<i>n</i>, where <i>n</i> is an integer.
-         */
-        public ConnectedThread(BluetoothSocket pm_btSocket) {
+
+        private ConnectedThread(BluetoothSocket pm_btSocket, String name) {
+            super(name);
             this.pm_btSocket = pm_btSocket;
-            LOG_TAG = "Connection Handling Thread";
             created = true;
             Log.v(LOG_TAG,"attempting I/O creation");
             try {
@@ -448,6 +466,10 @@ final class ClientConnectionHandler implements BluetoothConstants{
             Log.d(LOG_TAG,created?"Successfully created I/O - Streams":"I/O Stream creation failed");
         }
 
+        ConnectedThread(BluetoothSocket pm_btSocket) {
+            this(pm_btSocket, "Bluetooth " + LOG_TAG);
+        }
+
         /**
          * If this thread was constructed using a separate
          * <code>Runnable</code> run object, then that
@@ -463,30 +485,30 @@ final class ClientConnectionHandler implements BluetoothConstants{
         public void run() {
             if (created) {
                 Log.i(LOG_TAG,"Beginning Connection Listening");
-                while (getConnectionState() == CONNECTION_STATE_CONNECTED) { //
+                while (m_connectionState == CONNECTION_STATE_CONNECTED) { //
                     ;
                 }
-                Log.i(LOG_TAG,"noticed Connection loss, alerting StreamListeners and stopping");
+                Log.i(LOG_TAG, "noticed Connection loss, alerting StreamListeners and stopping");  //TODO alerting StreamListener
             }
         }
 
-        public void write (String toWrite, boolean force) {
+        public void write(String toWrite, boolean force) throws BluetoothConnectionStateException {
             try {
                 pm_OutputSt.write(toWrite);
                 if (force) {
                     pm_OutputSt.flush();
                 }
             } catch (IOException e) {
-                Log.e(LOG_TAG,"Exception while trying to send message, ignoring message:"+toWrite,e);
+                Log.e(LOG_TAG, "Exception while trying to send message, ignoring message:" + toWrite, e);
+                throw new BluetoothConnectionStateException(getConnectionState(), "could not send Message: " + toWrite, e);
             }
         }
 
         int read (char[] buffer) throws BluetoothConnectionStateException {
             try {
                 return pm_InputSt.read(buffer);
-            }
-            catch (IOException e){
-                throw new BluetoothConnectionStateException("could not read Stream. Socket might be closed or read might be disabled.");
+            } catch (IOException e) {
+                throw new BluetoothConnectionStateException(getConnectionState(), "could not read Stream. Socket might be closed or read might be disabled.", e);
             }
         }
 
@@ -501,11 +523,16 @@ final class ClientConnectionHandler implements BluetoothConstants{
         public boolean cancel () {
             Log.d(LOG_TAG,"closing Socket and I/O Streams");
             try {
-                if (pm_InputSt != null )
-                    pm_InputSt.close();
-                if (pm_OutputSt != null )
-                    pm_OutputSt.close();
                 pm_btSocket.close();
+                pm_btSocket = null;
+                if (pm_InputSt != null) {
+                    pm_InputSt.close();
+                    pm_InputSt = null;
+                }
+                if (pm_OutputSt != null) {
+                    pm_OutputSt.close();
+                    pm_OutputSt = null;
+                }
             } catch (IOException closeExcp) {
                 Log.e(LOG_TAG,"Unable to close I/O-Streams or Bluetooth Socket",closeExcp);
                 return false;

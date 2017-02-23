@@ -1,25 +1,24 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
-import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.*;
-
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import android.bluetooth.BluetoothAdapter;
+import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.view.ActionMode;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.View;
 import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
-import java.util.Vector;
 
-import android.widget.Toast;
-import android.widget.ArrayAdapter;
-import android.view.View;
-import android.widget.TextView;
-import android.content.Intent;
-import android.bluetooth.BluetoothAdapter;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothInactivityException;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothMissingException;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
 public class DeviceList extends AppCompatActivity {
     //Class Attributes
@@ -57,12 +56,12 @@ public class DeviceList extends AppCompatActivity {
         btnPaired.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                showAddressesAndNames();
+                showAddressesAndNames(false);
             }
         });
     }
 
-    public void showAddressesAndNames () {
+    public void showAddressesAndNames(boolean tried) {
         try {
             List<String> adan =  myBtClient.getAddressesAndNames(true);
             final ArrayAdapter adapter = new ArrayAdapter(this,android.R.layout.simple_list_item_1, adan);
@@ -73,6 +72,7 @@ public class DeviceList extends AppCompatActivity {
             showMessageBox(e.getMessage());
             Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(turnBTon,1);
+            if (!tried) showAddressesAndNames(true);
         }
         catch (BluetoothMissingException e) {
             showMessageBox(e.getMessage());

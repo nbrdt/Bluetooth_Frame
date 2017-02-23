@@ -1,5 +1,5 @@
-package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;/*
-  *@author kevin
+package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
+/**@author KI
   *@version 0.0 from 05.02.2017 in Bluetooth_Frame
  **/
 
@@ -8,7 +8,7 @@ import android.support.annotation.NonNull;
 import java.math.BigDecimal;
 import java.util.Date;
 
-public class DataSet implements Comparable,Cloneable,BluetoothConstants {
+public final class DataSet implements Comparable, Cloneable, BluetoothConstants {  //immutable object
     private final Date timeStamp;
     private final BigDecimal temperature;
     private final BigDecimal humidity;
@@ -86,6 +86,11 @@ public class DataSet implements Comparable,Cloneable,BluetoothConstants {
         return new DataSet(timeStamp,temperature,humidity,soilMoisture);
     }
 
+    /**
+     * Returns the creation time of this DataSet
+     *
+     * @return the timeStamp as an Date object
+     */
     public Date getTimeStamp() {
         return timeStamp;
     }
@@ -144,5 +149,22 @@ public class DataSet implements Comparable,Cloneable,BluetoothConstants {
     public int compareTo(@NonNull Object o) {
         DataSet toCompare = (DataSet)o;
         return this.getTimeStamp().compareTo(toCompare.getTimeStamp());
+    }
+
+    /**
+     * This will convert all necessary Data, which is contained by this DataSet, into Strings and
+     * returns them. This is not meant for retrieving a copy of this DataSet, just for debugging purposes. If
+     * you would like to retrieve a copy, use .clone
+     *
+     * @return The String representation of this DataSet
+     */
+    @Override
+    public String toString() {
+        return "DataSet{" +
+                "timeStamp=" + timeStamp.toString() +
+                ", temperature=" + temperature.toString() +
+                ", humidity=" + humidity.toString() +
+                ", soilMoisture=" + soilMoisture.toString() +
+                '}';
     }
 }

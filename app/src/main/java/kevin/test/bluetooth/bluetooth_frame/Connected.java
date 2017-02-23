@@ -1,7 +1,11 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
 import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +17,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,11 +28,13 @@ import java.util.TimerTask;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.*;
 
 public class Connected extends Activity {
+    private static final String LOG_TAG = "Connected Activity";
+    ArduinoBluetoothClient client;
 
-    Diagramm temperatureDiagram;
+    DiagramFragment temperatureDiagram;
     ArrayList<Integer> temperaturWerte = new ArrayList<>();
 
-    Diagramm luftfeuchteDiagram;
+    DiagramFragment luftfeuchteDiagram;
     ArrayList<Integer> luftfeuchteWerte = new ArrayList<>();
 
     int layoutWidth;
@@ -37,20 +44,21 @@ public class Connected extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connected);
 
-        String addresse = ""+getIntent().getExtras().getString("addresse");
+        String addresse = "" + getIntent().getExtras().getString("addresse");
 
         Toast.makeText(getApplicationContext(), addresse, Toast.LENGTH_SHORT).show();
 
 
-        if(!addresse.isEmpty()) {
+        if (!addresse.isEmpty()) {
 
-            final ArduinoBluetoothClient client = NFK_ArduinoBluetoothClient.getClient();
+             client = NFK_ArduinoBluetoothClient.getClient();
 
             try {
                 client.connectBT(addresse, 1);
 
-                final LinearLayout l = (LinearLayout)findViewById(R.id.layout);
+                final LinearLayout l = (LinearLayout) findViewById(R.id.activity_connected);
                 l.setBackgroundColor(Color.LTGRAY);
+
 
 //Größe des Felds
                 l.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
@@ -58,71 +66,120 @@ public class Connected extends Activity {
                     public void onGlobalLayout() {
                         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
                             l.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                        }
-                        else {
+                        } else {
                             l.getViewTreeObserver().removeGlobalOnLayoutListener(this);
                         }
+                        FragmentManager fragmentManager = getFragmentManager();
+                        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
 
                         final float touchWidth = l.getWidth();
-                        layoutWidth = (int)touchWidth;
+                        layoutWidth = (int) touchWidth;
 
                         int width = layoutWidth;
-                        int height = (int) Math.round(layoutWidth*0.6);
+                        int height = (int) Math.round(layoutWidth * 0.6);
                         LinearLayout.LayoutParams parms = new LinearLayout.LayoutParams(width, height);
+                        temperatureDiagram = DiagramFragment.newInstance("Temperatur:", height, width, temperaturWerte, -25, 50, "°C"); //
+                        fragmentTransaction.add(R.id.activity_connected, temperatureDiagram, "temperaturen");
+                        fragmentTransaction.addToBackStack("temperatures");
+                        fragmentTransaction.commit();
 
-                        TextView temperatureTitle = new TextView(getApplicationContext());
-                        temperatureTitle.setTextColor(Color.BLACK);
-                        temperatureTitle.setText("Temperatur:");
-                        l.addView(temperatureTitle);
-
-                        temperatureDiagram = new Diagramm(getApplicationContext(), height, width, temperaturWerte, -25, 50, "°C");
-                        temperatureDiagram.setBackgroundColor(Color.WHITE);
-                        temperatureDiagram.setLayoutParams(parms);
-                        l.addView(temperatureDiagram);
-
-                        TextView luftfeuchteTitle = new TextView(getApplicationContext());
-                        luftfeuchteTitle.setTextColor(Color.BLACK);
-                        luftfeuchteTitle.setText("Luftfeuchte:");
-                        l.addView(luftfeuchteTitle);
-
-                        luftfeuchteDiagram = new Diagramm(getApplicationContext(), height, width, luftfeuchteWerte, 0, 100, "%");
-                        luftfeuchteDiagram.setBackgroundColor(Color.WHITE);
-                        luftfeuchteDiagram.setLayoutParams(parms);
-                        l.addView(luftfeuchteDiagram);
-
-
+                        fragmentTransaction = fragmentManager.beginTransaction();
+                        luftfeuchteDiagram = DiagramFragment.newInstance("Luftfeuchte:",height, width,luftfeuchteWerte,0,100,"%");
+                        fragmentTransaction.add(R.id.activity_connected, luftfeuchteDiagram, "luftfeuchten");
+                        fragmentTransaction.addToBackStack("luftfeuchten");
+                        fragmentTransaction.commit();
 
                     }
                 });
 
-            //Die Diagramme werden alle 10 sekunden geupdatet
+                //Die Diagramme werden alle 10 sekunden geupdatet
 
-            new Timer().scheduleAtFixedRate(new TimerTask() {
-                @Override
-                public void run() {
-                    List<DataSet> data = client.getReceivedData();
-                    if(data != null) {
-                        for (int i = 0; i < 10; i++) {
-                            DataSet werteSet = data.get(data.size() - 10 + i);
-                            temperatureDiagram.addWert(werteSet.getTemperature().intValue());
-                            luftfeuchteDiagram.addWert(werteSet.getHumidity().intValue());
+                /*new Timer().scheduleAtFixedRate(new TimerTask() {
+                    @Override
+                    public void run() {
+                        List<DataSet> data = client.getReceivedData();
+                        if (data != null) {
+                            for (DataSet set :
+                                    data) {
+                                temperatureDiagram.addToDiagram(set.getTemperature().intValue());
+                                luftfeuchteDiagram.addToDiagram(set.getHumidity().intValue());
+                            }
                         }
+                        client.clearReceivedData();
                     }
-                }
-            }, 0, 10000);
+                }, 0, 10000);*/
 
+            } catch (BluetoothConnectionStateException e) {
+                Log.e(LOG_TAG, "connection Error", e);
+                finish();
             }
-            catch (Throwable t){
-                Log.e("Connected:", t.toString());
-            }
 
 
-        }
-        else {
+        } else {
             Toast.makeText(getApplicationContext(), "Connection failed", Toast.LENGTH_SHORT).show();
         }
-
     }
 
 
+
+
+    @Override
+    public void onStart() {
+        super.onStart();
+
+
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+    }
+
+    /**
+     * Perform any final cleanup before an activity is destroyed.  This can
+     * happen either because the activity is finishing (someone called
+     * {@link #finish} on it, or because the system is temporarily destroying
+     * this instance of the activity to save space.  You can distinguish
+     * between these two scenarios with the {@link #isFinishing} method.
+     * <p>
+     * <p><em>Note: do not count on this method being called as a place for
+     * saving data! For example, if an activity is editing data in a content
+     * provider, those edits should be committed in either {@link #onPause} or
+     * {@link #onSaveInstanceState}, not here.</em> This method is usually implemented to
+     * free resources like threads that are associated with an activity, so
+     * that a destroyed activity does not leave such things around while the
+     * rest of its application is still running.  There are situations where
+     * the system will simply kill the activity's hosting process without
+     * calling this method (or any others) in it, so it should not be used to
+     * do things that are intended to remain around after the process goes
+     * away.
+     * <p>
+     * <p><em>Derived classes must call through to the super class's
+     * implementation of this method.  If they do not, an exception will be
+     * thrown.</em></p>
+     *
+     * @see #onPause
+     * @see #onStop
+     * @see #finish
+     * @see #isFinishing
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        client.destroy();
+    }
+
+    /**
+     * Called when the activity has detected the user's press of the back
+     * key.  The default implementation simply finishes the current activity,
+     * but you can override this to do whatever you want.
+     */
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
+        }
+    }
 }

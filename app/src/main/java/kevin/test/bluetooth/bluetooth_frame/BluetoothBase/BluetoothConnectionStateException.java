@@ -1,10 +1,32 @@
-package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;/*
-  *@author kevin
-  *@version 1.0 from 21.01.2017.01.2017 in Bluetooth_Frame
+package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
+
+/**
+ * @author KI
+ * @version 1.1 from 21.02.2017
  **/
 
 public class BluetoothConnectionStateException extends Exception {
-    public BluetoothConnectionStateException(String message) {
+    private final Integer connectionState;
+
+    public BluetoothConnectionStateException(Integer connectionState, String message, Throwable cause) {
+        super(message, cause);
+        this.connectionState = connectionState;
+    }
+
+    public BluetoothConnectionStateException(String message, Throwable cause) {
+        this(null, message, cause);
+    }
+
+    public BluetoothConnectionStateException(Integer connectionState, String message) {
         super(message);
+        this.connectionState = connectionState;
+    }
+
+    public BluetoothConnectionStateException(String message) {
+        this(null, message);
+    }
+
+    public Integer getConnectionState() {
+        return connectionState;
     }
 }

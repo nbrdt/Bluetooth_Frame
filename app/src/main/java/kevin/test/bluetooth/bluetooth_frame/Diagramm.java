@@ -49,7 +49,8 @@ public class Diagramm extends View {
         maxWert = max;
 
         yMeasurement = height/(maxWert-minWert);
-        xMeasurement = width/werte.size();
+        if (werte.size()>0) xMeasurement = width/werte.size();  // TODO passende Lösung anstatt dieser Notlösung
+        else xMeasurement = width/1;
     }
 
     public void onDraw(Canvas canvas) {
@@ -138,9 +139,9 @@ public class Diagramm extends View {
 
 
     public void addWert(int neu) {
-        werte.remove(0);
+        if(werte.size()>0)werte.remove(0);//TODO passende Lösung anstatt dieser NotLösung
         werte.add(neu);
-        invalidate();
+        //invalidate(); //TODO passende Lösung anstatt dieser Notlösung
     }
 
 

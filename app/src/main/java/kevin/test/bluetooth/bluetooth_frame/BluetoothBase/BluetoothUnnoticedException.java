@@ -1,7 +1,8 @@
 package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
 
 /**
- * Created by kevin on 20.01.2017.
+ * @author KI
+ * @version 1.0
  */
 
 public class BluetoothUnnoticedException extends RuntimeException {
