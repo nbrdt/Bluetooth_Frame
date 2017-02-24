@@ -42,7 +42,7 @@ public class DiagramFragment extends Fragment {
     private Diagram m_diagram;
     private Button m_refreshButton;
     private RelativeLayout m_extraContainer;
-    private onRefreshListener m_refreshListener;
+    private RefreshListener m_refreshListener;
     private DiagramFragment thisFragment = this;
     private Button.OnClickListener m_refreshOnClickListener = new Button.OnClickListener() {
         @Override
@@ -79,7 +79,8 @@ public class DiagramFragment extends Fragment {
      * }
      **/
 
-    public static DiagramFragment newInstance(String name, int height, int width, ArrayList<Integer> values, int min, int max, String unit) {
+
+    public static DiagramFragment newInstance(String name, int height, int width, ArrayList<Integer> values, int min, int max, String unit, DiagramViewSettings viewSettings) {
         DiagramFragment fragment = new DiagramFragment();
         Bundle args = new Bundle();
         args.putString(INSTANCESTATE_DIAGRAM_NAME, name);
@@ -89,14 +90,30 @@ public class DiagramFragment extends Fragment {
         args.putInt(INSTANCESTATE_DIAGRAM_MINVALUE, min);
         args.putInt(INSTANCESTATE_DIAGRAM_MAXVALUE, max);
         args.putString(INSTANCESTATE_DIAGRAM_UNIT, unit);
-        args.putBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS, DiagramViewSettings.getDefaultSettings().createToBundle());
+        args.putBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS, viewSettings.createToBundle());
         fragment.setArguments(args);
         fragment.setDiagram(null);
         return fragment;
     }
 
+    public static DiagramFragment newInstance(String name, int height, int width, ArrayList<Integer> values, int min, int max, String unit) {
+        return newInstance(name, height, width, values, min, max, unit, DiagramViewSettings.getDefaultSettings());
+    }
+
+    public static DiagramFragment newInstance(DiagramSettings settings, ArrayList<Integer> values) {
+        return newInstance(settings.getName(), settings.getHeight(), settings.getWidth(), values, settings.getMin(), settings.getMax(), settings.getUnit(), settings.getViewSettings());
+    }
+
     private void setDiagram(Diagram diagram) {
         this.m_diagram = diagram;
+    }
+
+    public void setRefreshListener(RefreshListener refreshListener) {
+        m_refreshListener = refreshListener;
+    }
+
+    public DiagramSettings getSettings() {
+        return m_settings;
     }
 
 
@@ -171,6 +188,14 @@ public class DiagramFragment extends Fragment {
         m_values.add(valueToAdd);
     }
 
+    public void updateDiagram(ArrayList<Integer> newValues) {
+        m_values = newValues;
+        removeFromExtraContainer();
+        m_rootView.removeView(m_extraContainer);
+        m_rootView.removeView(m_diagram);
+        createLayout();
+    }
+
     public void updateDiagram() {
         removeFromExtraContainer();
         m_rootView.removeView(m_extraContainer);
@@ -211,6 +236,7 @@ public class DiagramFragment extends Fragment {
         m_nameView.setText(m_settings.getName());
         m_nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        params.addRule(RelativeLayout.CENTER_VERTICAL);
         params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
         m_nameView.setLayoutParams(params);
         this.m_extraContainer.addView(m_nameView);
@@ -221,12 +247,13 @@ public class DiagramFragment extends Fragment {
         m_refreshButton.setText(R.string.button_refresh_defaultText);
         m_refreshButton.setOnClickListener(m_refreshOnClickListener);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        params.addRule(RelativeLayout.CENTER_VERTICAL);
         params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         m_refreshButton.setLayoutParams(params);
         this.m_extraContainer.addView(m_refreshButton);
     }
 
-    public interface onRefreshListener {
+    public interface RefreshListener {
         public void onRefreshRequest(DiagramFragment requester);
     }
 
