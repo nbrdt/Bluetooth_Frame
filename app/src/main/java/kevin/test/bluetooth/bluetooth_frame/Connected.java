@@ -106,8 +106,12 @@ public class Connected extends Activity implements DiagramManager.DataProvider {
 
 
     public void changeButtonClicked(View v) {
-        if (m_diagramManager.isShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
-            m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+        if (m_diagramManager.isShown() != null) {
+            if (m_diagramManager.isShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
+                m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+            } else {
+                m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+            }
         } else {
             m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
         }

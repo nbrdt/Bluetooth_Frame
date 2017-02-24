@@ -1,6 +1,7 @@
 package kevin.test.bluetooth.bluetooth_frame.DiagramManaging;
 
 import android.app.Activity;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.util.Log;
 import android.view.ViewGroup;
@@ -35,7 +36,7 @@ public class DiagramManager {
                     requester.updateDiagram(refresher.onRefreshRequest(requester.getSettings()));
                 }
             }
-        };
+        };  //TODO implment own BackStack, which contains used Fragments, sothat the references aren't null anymore. Manage in onBackstackListener.
     }
 
     public void showDiagram(String name) {
@@ -46,6 +47,7 @@ public class DiagramManager {
             m_current = DiagramFragment.newInstance(settings, data);
             fragmentTransaction.add(m_rootView.getId(), m_current, settings.getName());
         } else {
+
             DiagramFragment replaceFragment = DiagramFragment.newInstance(settings, data);
             fragmentTransaction.remove(m_current);
             fragmentTransaction.add(m_rootView.getId(), replaceFragment, settings.getName());

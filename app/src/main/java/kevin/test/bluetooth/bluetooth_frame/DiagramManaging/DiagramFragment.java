@@ -5,6 +5,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -137,7 +138,12 @@ public class DiagramFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        m_rootView = new LinearLayout(container.getContext());
+        if (container != null) {
+            m_rootView = new LinearLayout(container.getContext()); //TODO save Container Context, so that it can be reused
+        } else {
+            Log.w("Diagram Fragment", "Had to use context known from previous attach, context might not be the same");
+            m_rootView = new LinearLayout(m_attachContext);
+        }
         m_rootView.setOrientation(LinearLayout.VERTICAL);
         m_rootView.setId(View.NO_ID);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -190,17 +196,12 @@ public class DiagramFragment extends Fragment {
 
     public void updateDiagram(ArrayList<Integer> newValues) {
         m_values = newValues;
-        removeFromExtraContainer();
-        m_rootView.removeView(m_extraContainer);
-        m_rootView.removeView(m_diagram);
-        createLayout();
+        updateDiagram();
     }
 
     public void updateDiagram() {
-        removeFromExtraContainer();
-        m_rootView.removeView(m_extraContainer);
-        m_rootView.removeView(m_diagram);
-        createLayout();
+        this.m_rootView.removeView(m_diagram);
+        drawDiagram();
     }
 
     private void removeFromExtraContainer() {
