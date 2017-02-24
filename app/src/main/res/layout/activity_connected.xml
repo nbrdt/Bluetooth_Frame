@@ -17,11 +17,11 @@
         android:orientation="horizontal"
         tools:ignore="UselessParent">
         <Button
-            android:text="@string/button_refresh_defaultText"
+            android:text="@string/button_change_defaultText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/refreshButton"
-            android:onClick="@string/button_refresh_onClick"
+            android:onClick="@string/button_change_onClick"
             android:layout_weight="1" />
 
         <Button

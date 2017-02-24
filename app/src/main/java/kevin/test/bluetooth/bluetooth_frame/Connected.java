@@ -105,19 +105,11 @@ public class Connected extends Activity implements DiagramManager.DataProvider {
     }
 
 
-    public void refreshButtonClicked(View v) {
-        List<DataSet> received = client.getReceivedData();
-        if (received != null) {
-            client.clearReceivedData();
-            for (DataSet data :
-                    received) {
-                temperatureDiagram.addToDiagram(data.getTemperature().intValue());
-                temperaturWerte.add(data.getTemperature().intValue());
-                luftfeuchteDiagram.addToDiagram(data.getHumidity().intValue());
-                luftfeuchteWerte.add(data.getHumidity().intValue());
-            }
-            temperatureDiagram.updateDiagram();
-            luftfeuchteDiagram.updateDiagram();
+    public void changeButtonClicked(View v) {
+        if (m_diagramManager.isShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
+            m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+        } else {
+            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
         }
     }
 

@@ -1,7 +1,8 @@
 <resources>
     <string name="app_name">Bluetooth_Frame</string>
+    <string name="button_change_defaultText">Change Diagram</string>
+    <string name="button_change_onClick">changeButtonClicked</string>
     <string name="button_refresh_defaultText">Refresh</string>
-    <string name="button_refresh_onClick">refreshButtonClicked</string>
     <string name="button_disconnect_defaultText">Disconnect</string>
     <string name="button_disconnect_onClick">disconnectButtonClicked</string>
     <string name="button_connect_defaultText">Connect</string>

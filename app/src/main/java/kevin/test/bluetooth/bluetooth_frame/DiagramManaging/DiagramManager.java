@@ -57,6 +57,10 @@ public class DiagramManager {
         fragmentTransaction.commit();
     }
 
+    public DiagramSettings isShown() {
+        return m_current.getSettings();
+    }
+
     private DiagramSettings getSettingsFromName(String name) {
         for (DiagramSettings setting :
                 m_diagrams) {
