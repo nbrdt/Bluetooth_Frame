@@ -8,10 +8,14 @@ import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+
+import kevin.test.bluetooth.bluetooth_frame.R;
 
 
 /**
@@ -33,14 +37,24 @@ public class DiagramFragment extends Fragment {
     private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.WHITE;
 
 
-    private String m_name, m_unit;
     private TextView m_nameView;
     private LinearLayout m_rootView;
-    private Context m_attachContext;
     private Diagram m_diagram;
-    private ArrayList<Integer> m_values;
-    private int m_height, m_width, m_min, m_max;
+    private Button m_refreshButton;
+    private RelativeLayout m_extraContainer;
+    private onRefreshListener m_refreshListener;
+    private DiagramFragment thisFragment = this;
+    private Button.OnClickListener m_refreshOnClickListener = new Button.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (m_refreshListener != null) {
+                m_refreshListener.onRefreshRequest(thisFragment);
+            }
+        }
+    };
 
+    private Context m_attachContext;
+    private ArrayList<Integer> m_values;
     private DiagramSettings m_settings;
 
 
@@ -91,15 +105,15 @@ public class DiagramFragment extends Fragment {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
             Bundle args = getArguments();
-            m_name = args.getString(INSTANCESTATE_DIAGRAM_NAME);
-            m_height = args.getInt(INSTANCESTATE_DIAGRAM_HEIGHT);
-            m_width = args.getInt(INSTANCESTATE_DIAGRAM_WIDTH);
-            m_min = args.getInt(INSTANCESTATE_DIAGRAM_MINVALUE);
-            m_max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
+            String name = args.getString(INSTANCESTATE_DIAGRAM_NAME);
+            int height = args.getInt(INSTANCESTATE_DIAGRAM_HEIGHT);
+            int width = args.getInt(INSTANCESTATE_DIAGRAM_WIDTH);
+            int min = args.getInt(INSTANCESTATE_DIAGRAM_MINVALUE);
+            int max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
             m_values = args.getIntegerArrayList(INSTANCESTATE_DIAGRAM_VALUES);
-            m_unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
+            String unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
             DiagramViewSettings viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS));
-            m_settings = new DiagramSettings(viewSettings, m_name, m_unit, m_height, m_width, m_min, m_max);
+            m_settings = new DiagramSettings(viewSettings, name, unit, height, width, min, max);
         }
     }
 
@@ -158,30 +172,62 @@ public class DiagramFragment extends Fragment {
     }
 
     public void updateDiagram() {
-        m_rootView.removeView(m_nameView);
+        removeFromExtraContainer();
+        m_rootView.removeView(m_extraContainer);
         m_rootView.removeView(m_diagram);
         createLayout();
     }
 
+    private void removeFromExtraContainer() {
+        m_extraContainer.removeView(m_nameView);
+        m_extraContainer.removeView(m_refreshButton);
+    }
+
     private void createLayout() {
+        drawExtraContainer();
         drawTextName();
+        drawRefreshButton();
         drawDiagram();
     }
 
+    private void drawExtraContainer() {
+        this.m_extraContainer = new RelativeLayout(m_rootView.getContext());
+        m_extraContainer.setId(View.NO_ID);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        m_extraContainer.setLayoutParams(params);
+        this.m_rootView.addView(m_extraContainer);
+    }
+
     private void drawDiagram() {
-        setDiagram(new Diagram(m_attachContext, m_height, m_width, m_values, m_min, m_max, m_unit));
+        setDiagram(new Diagram(m_rootView.getContext(), m_values, m_settings));
         m_diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
-        m_diagram.setLayoutParams(new LinearLayout.LayoutParams(m_width, m_height));
+        m_diagram.setLayoutParams(new LinearLayout.LayoutParams(m_settings.getWidth(), m_settings.getHeight()));
+        m_diagram.setSettings(m_settings);
         this.m_rootView.addView(m_diagram);
     }
 
     private void drawTextName() {
-        this.m_nameView = new TextView(m_attachContext);
-        m_nameView.setText(m_name);
+        this.m_nameView = new TextView(m_extraContainer.getContext());
+        m_nameView.setText(m_settings.getName());
         m_nameView.setTextColor(DEFAULT_COLOR_NAMETEXT);
-        ViewGroup.LayoutParams params = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
         m_nameView.setLayoutParams(params);
-        this.m_rootView.addView(m_nameView);
+        this.m_extraContainer.addView(m_nameView);
+    }
+
+    private void drawRefreshButton() {
+        this.m_refreshButton = new Button(m_extraContainer.getContext());
+        m_refreshButton.setText(R.string.button_refresh_defaultText);
+        m_refreshButton.setOnClickListener(m_refreshOnClickListener);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
+        m_refreshButton.setLayoutParams(params);
+        this.m_extraContainer.addView(m_refreshButton);
+    }
+
+    public interface onRefreshListener {
+        public void onRefreshRequest(DiagramFragment requester);
     }
 
 }

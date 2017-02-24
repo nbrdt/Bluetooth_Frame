@@ -11,7 +11,8 @@ import android.widget.Toast;
 import java.util.List;
 
 /**
- * Created by Niklas on 23.01.2017.
+ * @author NB & KI
+ * @version 1.1
  */
 
 public class Diagram extends View {
@@ -36,8 +37,7 @@ public class Diagram extends View {
     public Diagram(Context con, List<Integer> messwerte, DiagramSettings settings) {
         super(con);
         context = con;
-        this.settings = settings;
-        viewSettings = this.settings.getViewSettings();
+        setSettings(settings);
         werte = messwerte;
 
         yMeasurement = settings.getHeight() / (settings.getMax() - settings.getMin());
@@ -140,8 +140,16 @@ public class Diagram extends View {
         this.textViewer = textViewer;
     }
 
+    public DiagramSettings getSettings() {
+        return this.settings;
+    }
     public void setSettings(DiagramSettings settings) {
+        this.settings = settings;
+        viewSettings = this.settings.getViewSettings();
+    }
 
+    public void updateViewSettings() {
+        viewSettings = this.settings.getViewSettings();
     }
 
     private int toIndex(float xPosition) {
