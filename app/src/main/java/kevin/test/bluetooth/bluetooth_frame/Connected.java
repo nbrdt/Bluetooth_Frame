@@ -1,31 +1,24 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
 import android.app.Activity;
-import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.graphics.Color;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewTreeObserver;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 import android.widget.Toast;
 
 
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.*;
+import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramFragment;
 
 public class Connected extends Activity {
     private static final String LOG_TAG = "Connected Activity";

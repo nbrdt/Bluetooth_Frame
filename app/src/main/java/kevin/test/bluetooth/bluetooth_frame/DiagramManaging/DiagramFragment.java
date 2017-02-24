@@ -1,4 +1,4 @@
-package kevin.test.bluetooth.bluetooth_frame;
+package kevin.test.bluetooth.bluetooth_frame.DiagramManaging;
 
 import android.app.Fragment;
 import android.content.Context;
@@ -27,6 +27,7 @@ public class DiagramFragment extends Fragment {
     private static final String INSTANCESTATE_DIAGRAM_MINVALUE = "Diagram minimum value";
     private static final String INSTANCESTATE_DIAGRAM_MAXVALUE = "Diagram maximum value";
     private static final String INSTANCESTATE_DIAGRAM_UNIT = "Diagram m_unit";
+    private static final String INSTANCESTATE_DIAGRAMVIEWSETTINGS = "DIagram viewSettings";
     //Default m_values
     private static final int DEFAULT_COLOR_NAMETEXT = Color.BLACK;
     private static final int DEFAULT_COLOR_DIAGRAM_BACKGROUND = Color.WHITE;
@@ -36,9 +37,11 @@ public class DiagramFragment extends Fragment {
     private TextView m_nameView;
     private LinearLayout m_rootView;
     private Context m_attachContext;
-    private Diagramm m_diagram;
+    private Diagram m_diagram;
     private ArrayList<Integer> m_values;
     private int m_height, m_width, m_min, m_max;
+
+    private DiagramSettings m_settings;
 
 
     public DiagramFragment() {
@@ -52,7 +55,7 @@ public class DiagramFragment extends Fragment {
      * @return a newly created DiagramFragment
      */
     /**
-     * public static DiagramFragment newInstance(String m_name, Diagramm m_diagram) {
+     * public static DiagramFragment newInstance(String m_name, Diagram m_diagram) {
      * DiagramFragment fragment = new DiagramFragment();
      * Bundle args = new Bundle();
      * args.putString(INSTANCESTATE_DIAGRAM_NAME, m_name);
@@ -72,12 +75,13 @@ public class DiagramFragment extends Fragment {
         args.putInt(INSTANCESTATE_DIAGRAM_MINVALUE, min);
         args.putInt(INSTANCESTATE_DIAGRAM_MAXVALUE, max);
         args.putString(INSTANCESTATE_DIAGRAM_UNIT, unit);
+        args.putBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS, DiagramViewSettings.getDefaultSettings().createToBundle());
         fragment.setArguments(args);
         fragment.setDiagram(null);
         return fragment;
     }
 
-    private void setDiagram(Diagramm diagram) {
+    private void setDiagram(Diagram diagram) {
         this.m_diagram = diagram;
     }
 
@@ -94,6 +98,8 @@ public class DiagramFragment extends Fragment {
             m_max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
             m_values = args.getIntegerArrayList(INSTANCESTATE_DIAGRAM_VALUES);
             m_unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
+            DiagramViewSettings viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS));
+            m_settings = new DiagramSettings(viewSettings, m_name, m_unit, m_height, m_width, m_min, m_max);
         }
     }
 
@@ -139,6 +145,8 @@ public class DiagramFragment extends Fragment {
         super.onDetach();
         m_attachContext = null;
         setDiagram(null);
+        m_settings.setViewSettings(null);
+        m_settings = null;
         m_nameView = null;
         m_rootView = null;
         m_values.clear();
@@ -161,7 +169,7 @@ public class DiagramFragment extends Fragment {
     }
 
     private void drawDiagram() {
-        setDiagram(new Diagramm(m_attachContext, m_height, m_width, m_values, m_min, m_max, m_unit));
+        setDiagram(new Diagram(m_attachContext, m_height, m_width, m_values, m_min, m_max, m_unit));
         m_diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
         m_diagram.setLayoutParams(new LinearLayout.LayoutParams(m_width, m_height));
         this.m_rootView.addView(m_diagram);

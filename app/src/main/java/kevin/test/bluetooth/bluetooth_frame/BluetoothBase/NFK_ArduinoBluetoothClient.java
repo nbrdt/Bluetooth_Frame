@@ -297,7 +297,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         private void addStringToList(List<BigDecimal> list, String toAdd) {
             Log.v(LOG_TAG, "Adding: " + toAdd);   // shows the received Value
             BigDecimal toInsert = new BigDecimal(toAdd);  //creates a BigDecimal from the received Value
-            toInsert = toInsert.setScale(DataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);  // sets this BegDecimals-Settings
+            toInsert = toInsert.setScale(DataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);  // sets this BegDecimals-DiagramSettings
             list.add(toInsert);  //adds the BigDecimal
         }
 
