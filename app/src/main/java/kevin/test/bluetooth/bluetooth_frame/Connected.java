@@ -132,6 +132,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         } catch (UnrecognizableBluetoothDataException e) {
             Log.e(LOG_TAG, "Data could not be read", e);
         }
+        m_dataReceived = new LinkedList<>();
         m_temperatureValues = new ArrayList<>(m_dataFromFile.size());
         m_humidityValues = new ArrayList<>(m_dataFromFile.size());
         m_soilValues = new ArrayList<>(m_dataFromFile.size());
@@ -172,8 +173,11 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStop() {
         super.onStop();
+        for (DataSet data :
+                m_dataReceived) {
+            m_dataFromFile.add(data);
+        }
         m_dataProvider.writeData(m_dataFromFile);
-        m_dataProvider.writeData(m_dataReceived);
     }
 
     /**
