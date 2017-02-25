@@ -114,6 +114,29 @@ public class BluetoothDataProvider {
     public void writeData(List<DataSet> toWrite) {
         writeData(toWrite, false);
     }
+    /* somehow not working... working on it
+    public void writeDataToEnd (List<DataSet> toWrite, boolean leaveOutputStreamOpen) {
+        if (m_FileWriter == null) {
+            try {
+                m_FileWriter = new PrintWriter(new FileWriter(m_Data), true);
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Could not resolve File Writer", e);
+                return;
+            }
+        }
+        for (DataSet data :
+                toWrite) {
+            m_FileWriter.println("####");
+            writeDateToEnd(INDICATOR_TIME, data.getTimeStamp());
+            writeValueToEnd(INDICATOR_TEMP, data.getTemperature());
+            writeValueToEnd(INDICATOR_HUMID, data.getHumidity());
+            writeValueToEnd(INDICATOR_SOIL, data.getSoilMoisture());
+        }
+        if (!leaveOutputStreamOpen) {
+            m_FileWriter.close();
+            m_FileWriter = null;
+        }
+    }*/
 
     private BigDecimal readValue(LineNumberReader reader, String indicator) throws IOException, UnrecognizableBluetoothDataException {
         String read = reader.readLine();
@@ -150,4 +173,16 @@ public class BluetoothDataProvider {
         writer.print(indicator);
         writer.println(m_formatter.format(toWrite));
     }
+    /*somehow not working... working on it
+    private void writeValueToEnd (String indicator, BigDecimal toWrite) {
+        m_FileWriter.append(indicator);
+        m_FileWriter.append(toWrite.toString());
+        m_FileWriter.append("\n");
+    }
+
+    private void writeDateToEnd (String indicator, Date toWrite) {
+        m_FileWriter.append(indicator);
+        m_FileWriter.append(m_formatter.format(toWrite));
+        m_FileWriter.append("\n");
+    }*/
 }

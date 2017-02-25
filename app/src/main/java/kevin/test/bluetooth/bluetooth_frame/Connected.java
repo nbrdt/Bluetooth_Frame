@@ -26,6 +26,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private static final String LOG_TAG = "Connected Activity";
     private static final String FRAGMENT_TAG_TEMPERATURE = "Temperature";
     private static final String FRAGMENT_TAG_HUMIDITY = "Humidity";
+    private static final String FRAGMENT_TAG_SOILMOISTURE = "Soil Moisture";
 
     private ArduinoBluetoothClient client;
     private Button refreshButton;
@@ -71,7 +72,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                 " width:" + width +
                                 " height: " + height);
                         m_globalSettings = new DiagramSettings(null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
-                        m_diagrams = new ArrayList<>(2);
+                        m_diagrams = new ArrayList<>(3);
                         m_diagrams.add(new DiagramSettings(
                                 m_globalSettings.getViewSettings(),
                                 FRAGMENT_TAG_TEMPERATURE,
@@ -83,6 +84,14 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                         m_diagrams.add(new DiagramSettings(
                                 m_globalSettings.getViewSettings(),
                                 FRAGMENT_TAG_HUMIDITY,
+                                "%",
+                                m_globalSettings.getHeight(),
+                                m_globalSettings.getWidth(),
+                                0,
+                                100));
+                        m_diagrams.add(new DiagramSettings(
+                                m_globalSettings.getViewSettings(),
+                                FRAGMENT_TAG_SOILMOISTURE,
                                 "%",
                                 m_globalSettings.getHeight(),
                                 m_globalSettings.getWidth(),
@@ -110,8 +119,10 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
     public void changeButtonClicked(View v) {
         if (m_diagramManager.getShown() != null) {
-            if (m_diagramManager.getShown() != null && m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
+            if (m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
                 m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+            } else if (m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_HUMIDITY)) {
+                m_diagramManager.showDiagram(FRAGMENT_TAG_SOILMOISTURE);
             } else {
                 m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
             }
@@ -177,7 +188,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                 m_dataReceived) {
             m_dataFromFile.add(data);
         }
-        m_dataProvider.writeData(m_dataFromFile);
+        m_dataProvider.writeData(m_dataFromFile, false);
     }
 
     /**
@@ -232,14 +243,16 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
     @Override
     public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription) {
+        refreshData();
         switch (fragmentDescription.getName()) {
             case (FRAGMENT_TAG_TEMPERATURE): {
-                refreshData();
                 return copyValues(m_temperatureValues);
             }
             case (FRAGMENT_TAG_HUMIDITY): {
-                refreshData();
                 return copyValues(m_humidityValues);
+            }
+            case (FRAGMENT_TAG_SOILMOISTURE): {
+                return copyValues(m_soilValues);
             }
         }
         return null;
