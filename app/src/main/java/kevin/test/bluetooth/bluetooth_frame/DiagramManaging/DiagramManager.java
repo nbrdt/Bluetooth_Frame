@@ -39,27 +39,52 @@ public class DiagramManager {
         };  //TODO implment own BackStack, which contains used Fragments, sothat the references aren't null anymore. Manage in onBackstackListener.
     }
 
+    public DiagramManager(Activity hostActivity, int rootViewId, List<DiagramSettings> diagrams, DataProvider refresher) {
+        this(hostActivity, (ViewGroup) hostActivity.findViewById(rootViewId), diagrams, refresher);
+    }
+
     public void showDiagram(String name) {
         DiagramSettings settings = getSettingsFromName(name); //throws IllegalArgumentException
         ArrayList<Integer> data = m_refresher.onRefreshRequest(settings);
         FragmentTransaction fragmentTransaction = m_host.getFragmentManager().beginTransaction();
-        if (m_current == null) {
+        if (!isActive()) {
             m_current = DiagramFragment.newInstance(settings, data);
             fragmentTransaction.add(m_rootView.getId(), m_current, settings.getName());
         } else {
-
             DiagramFragment replaceFragment = DiagramFragment.newInstance(settings, data);
             fragmentTransaction.remove(m_current);
             fragmentTransaction.add(m_rootView.getId(), replaceFragment, settings.getName());
             m_current = replaceFragment;
         }
         m_current.setRefreshListener(m_diagramRefresher);
-        fragmentTransaction.addToBackStack(settings.getName());
+        //fragmentTransaction.addToBackStack(settings.getName());
         fragmentTransaction.commit();
     }
 
-    public DiagramSettings isShown() {
-        return m_current.getSettings();
+    public boolean remove() {
+        if (isActive()) {
+            Log.v(LOG_TAG, "removing Diagram");
+            FragmentTransaction fragmentTransaction = m_host.getFragmentManager().beginTransaction();
+            fragmentTransaction.remove(m_current);
+            m_current = null;
+            fragmentTransaction.commit();
+            return true;
+        } else {
+            Log.v(LOG_TAG, "no diagram to remove");
+            return false;
+        }
+    }
+
+    private boolean isActive() {
+        return m_current != null;
+    }
+
+    public DiagramSettings getShown() {
+        if (isActive()) {
+            return m_current.getSettings();
+        } else {
+            return null;
+        }
     }
 
     private DiagramSettings getSettingsFromName(String name) {
@@ -72,9 +97,6 @@ public class DiagramManager {
         throw new IllegalArgumentException("could not resolve Diagram settings");
     }
 
-    public DiagramManager(Activity hostActivity, int rootViewId, List<DiagramSettings> diagrams, DataProvider refresher) {
-        this(hostActivity, (ViewGroup) hostActivity.findViewById(rootViewId), diagrams, refresher);
-    }
 
     public interface DataProvider {
         public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription);

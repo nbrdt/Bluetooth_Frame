@@ -106,8 +106,8 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
 
     public void changeButtonClicked(View v) {
-        if (m_diagramManager.isShown() != null) {
-            if (m_diagramManager.isShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
+        if (m_diagramManager.getShown() != null) {
+            if (m_diagramManager.getShown() != null && m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
                 m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
             } else {
                 m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
@@ -198,10 +198,12 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
      */
     @Override
     public void onBackPressed() {
-        if (getFragmentManager().getBackStackEntryCount() > 0) {
-            getFragmentManager().popBackStack();
-        } else {
-            super.onBackPressed();
+        if (!m_diagramManager.remove()) {
+            if (getFragmentManager().getBackStackEntryCount() > 0) {
+                getFragmentManager().popBackStack();
+            } else {
+                super.onBackPressed();
+            }
         }
     }
 
