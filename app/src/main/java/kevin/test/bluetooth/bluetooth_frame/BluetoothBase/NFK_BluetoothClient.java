@@ -32,8 +32,8 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
         m_succeed = false;
         m_listener = listener;
         m_ConnectionHandler = new ClientConnectionHandler(m_listener, charset);
-        m_connectedListeners = new LinkedList<BluetoothClient.onConnectedListener>();
-        m_disconnectedListeners = new LinkedList<onDisconnectedListener>();
+        m_connectedListeners = new LinkedList<>();
+        m_disconnectedListeners = new LinkedList<>();
     }
 
     protected NFK_BluetoothClient(String charset) {
@@ -86,7 +86,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
                 getBluetoothAdapter();  //throws BluetoothInactivityException
             }
             m_pairedDevices = m_myBluetooth.getBondedDevices();
-            m_addressesAndNames = new LinkedList<String>();
+            m_addressesAndNames = new LinkedList<>();
             int size = m_pairedDevices.size();
             if (size > 0) {
                 for (BluetoothDevice bt : m_pairedDevices) {
@@ -120,7 +120,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
                     "Client could not be connected - because of Bluetooth being inactive", e);
         }
         Log.d(LOG_TAG, "starting check for device");
-        BluetoothDevice matchingDevice = null;
+        BluetoothDevice matchingDevice;
         String[] separated = AddressAndName.split(ADDRESS_SEPARATOR);
         Log.i(LOG_TAG, "found:" + separated[0]);
         matchingDevice = m_myBluetooth.getRemoteDevice(separated[1]);
@@ -183,8 +183,10 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
     @Override
     public boolean destroy() {
         Log.i(LOG_TAG, "terminating BluetoothClient");
-        m_addressesAndNames.clear();
-        m_addressesAndNames = null;
+        if (m_addressesAndNames != null) {
+            m_addressesAndNames.clear();
+            m_addressesAndNames = null;
+        }
         m_pairedDevices = null;
         m_listener = null;
         m_myBluetooth = null;
@@ -301,7 +303,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
 
     protected class ConnectionListener implements BluetoothListener {
         protected ConnectionListener() {
-            ;
+
         }
 
         @Override

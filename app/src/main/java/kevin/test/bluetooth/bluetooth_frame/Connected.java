@@ -1,8 +1,8 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
-import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,7 +20,7 @@ import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramFragment;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 
-public class Connected extends Activity implements DiagramManager.DataProvider {
+public class Connected extends AppCompatActivity implements DiagramManager.DataProvider {
     private static final String LOG_TAG = "Connected Activity";
     private static final String FRAGMENT_TAG_TEMPERATURE = "Temperature";
     private static final String FRAGMENT_TAG_HUMIDITY = "Humidity";
@@ -85,7 +85,7 @@ public class Connected extends Activity implements DiagramManager.DataProvider {
                                 m_globalSettings.getWidth(),
                                 0,
                                 100));
-                        m_diagramManager = new DiagramManager(host, l, m_diagrams, (DiagramManager.DataProvider) host);
+                        m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
                         m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
                         Log.i(LOG_TAG, "Diagram Manager has been created");
                     }
