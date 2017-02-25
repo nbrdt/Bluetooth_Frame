@@ -51,7 +51,6 @@ public class DiagramManager {
             DiagramFragment replaceFragment = DiagramFragment.newInstance(settings, data);
             fragmentTransaction.remove(m_current);
             fragmentTransaction.add(m_rootView.getId(), replaceFragment, settings.getName());
-            m_current.setRefreshListener(null);
             m_current = replaceFragment;
         }
         m_current.setRefreshListener(m_diagramRefresher);

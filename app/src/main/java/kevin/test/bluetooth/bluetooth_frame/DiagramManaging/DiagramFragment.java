@@ -221,6 +221,7 @@ public class DiagramFragment extends Fragment {
         m_extraContainer.setId(View.NO_ID);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         m_extraContainer.setLayoutParams(params);
+        m_extraContainer.setId(View.NO_ID);
         this.m_rootView.addView(m_extraContainer);
     }
 
@@ -229,6 +230,7 @@ public class DiagramFragment extends Fragment {
         m_diagram.setBackgroundColor(DEFAULT_COLOR_DIAGRAM_BACKGROUND);
         m_diagram.setLayoutParams(new LinearLayout.LayoutParams(m_settings.getWidth(), m_settings.getHeight()));
         m_diagram.setSettings(m_settings);
+        m_diagram.setId(View.NO_ID);
         this.m_rootView.addView(m_diagram);
     }
 
@@ -240,6 +242,7 @@ public class DiagramFragment extends Fragment {
         params.addRule(RelativeLayout.CENTER_VERTICAL);
         params.addRule(RelativeLayout.ALIGN_PARENT_LEFT);
         m_nameView.setLayoutParams(params);
+        m_nameView.setId(View.NO_ID);
         this.m_extraContainer.addView(m_nameView);
     }
 
@@ -251,6 +254,7 @@ public class DiagramFragment extends Fragment {
         params.addRule(RelativeLayout.CENTER_VERTICAL);
         params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
         m_refreshButton.setLayoutParams(params);
+        m_refreshButton.setId(View.NO_ID);
         this.m_extraContainer.addView(m_refreshButton);
     }
 

@@ -6,5 +6,6 @@
     <string name="button_disconnect_defaultText">Disconnect</string>
     <string name="button_disconnect_onClick">disconnectButtonClicked</string>
     <string name="button_connect_defaultText">Connect</string>
+    <string name="menu_item_settings">Settings</string>
 
 </resources>
