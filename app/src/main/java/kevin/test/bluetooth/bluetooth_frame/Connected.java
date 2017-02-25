@@ -143,7 +143,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         } catch (UnrecognizableBluetoothDataException e) {
             Log.e(LOG_TAG, "Data could not be read", e);
         }
-        m_dataReceived = new LinkedList<>();
+        m_dataReceived = new LinkedList<>();  //there cannot be any received Data...
         m_temperatureValues = new ArrayList<>(m_dataFromFile.size());
         m_humidityValues = new ArrayList<>(m_dataFromFile.size());
         m_soilValues = new ArrayList<>(m_dataFromFile.size());
@@ -189,6 +189,8 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             m_dataFromFile.add(data);
         }
         m_dataProvider.writeData(m_dataFromFile, false);
+        m_dataReceived.clear(); //just to give some space back to the System in case, the user leaves but reenters, so that the user can have some more space
+        m_dataFromFile.clear();
     }
 
     /**
