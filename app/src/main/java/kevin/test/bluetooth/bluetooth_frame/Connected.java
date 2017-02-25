@@ -10,13 +10,15 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothConnectionStateException;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.DataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
-import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramFragment;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 
@@ -29,13 +31,14 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private Button refreshButton;
     private DiagramSettings m_globalSettings;
     private DiagramManager m_diagramManager;
+    private BluetoothDataProvider m_dataProvider;
+
     private List<DiagramSettings> m_diagrams;
-
-    private DiagramFragment temperatureDiagram;
-    private ArrayList<Integer> temperaturWerte = new ArrayList<>();
-
-    private DiagramFragment luftfeuchteDiagram;
-    private ArrayList<Integer> luftfeuchteWerte = new ArrayList<>();
+    private List<DataSet> m_dataFromFile = new LinkedList<>();
+    private List<DataSet> m_dataReceived = new LinkedList<>();
+    private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
+    private ArrayList<Integer> m_humidityValues = new ArrayList<>();
+    private ArrayList<Integer> m_soilValues = new ArrayList<>();
 
 
     @Override
@@ -43,13 +46,13 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connected);
         refreshButton = (Button) findViewById(R.id.refreshButton);
-
-        String addresse = "" + getIntent().getExtras().getString("addresse");
+        m_dataProvider = new BluetoothDataProvider(getApplicationContext());
+        String addresse = getIntent().getExtras().getString("addresse");
 
         Toast.makeText(getApplicationContext(), addresse, Toast.LENGTH_SHORT).show();
 
 
-        if (!addresse.isEmpty()) {
+        if (addresse != null && !addresse.isEmpty()) {
 
              client = NFK_ArduinoBluetoothClient.getClient();
 
@@ -124,6 +127,20 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStart() {
         super.onStart();
+        try {
+            m_dataFromFile = m_dataProvider.readData();
+        } catch (UnrecognizableBluetoothDataException e) {
+            Log.e(LOG_TAG, "Data could not be read", e);
+        }
+        m_temperatureValues = new ArrayList<>(m_dataFromFile.size());
+        m_humidityValues = new ArrayList<>(m_dataFromFile.size());
+        m_soilValues = new ArrayList<>(m_dataFromFile.size());
+        for (DataSet data :
+                m_dataFromFile) {
+            m_temperatureValues.add(data.getTemperature().intValue());
+            m_humidityValues.add(data.getHumidity().intValue());
+            m_soilValues.add(data.getSoilMoisture().intValue());
+        }
     }
 
     /**
@@ -155,6 +172,8 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStop() {
         super.onStop();
+        m_dataProvider.writeData(m_dataFromFile);
+        m_dataProvider.writeData(m_dataReceived);
     }
 
     /**
@@ -212,11 +231,11 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         switch (fragmentDescription.getName()) {
             case (FRAGMENT_TAG_TEMPERATURE): {
                 refreshData();
-                return temperaturWerte;
+                return copyValues(m_temperatureValues);
             }
             case (FRAGMENT_TAG_HUMIDITY): {
                 refreshData();
-                return luftfeuchteWerte;
+                return copyValues(m_humidityValues);
             }
         }
         return null;
@@ -228,9 +247,20 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             client.clearReceivedData();
             for (DataSet data :
                     received) {
-                temperaturWerte.add(data.getTemperature().intValue());
-                luftfeuchteWerte.add(data.getHumidity().intValue());
+                m_dataReceived.add(data);
+                m_temperatureValues.add(data.getTemperature().intValue());
+                m_humidityValues.add(data.getHumidity().intValue());
+                m_soilValues.add(data.getSoilMoisture().intValue());
             }
         }
+    }
+
+    private ArrayList<Integer> copyValues(ArrayList<Integer> toCopyFrom) {
+        ArrayList<Integer> copy = new ArrayList<>(toCopyFrom.size());
+        for (Integer i :
+                toCopyFrom) {
+            copy.add(i);
+        }
+        return copy;
     }
 }
