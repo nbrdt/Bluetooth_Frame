@@ -1,0 +1,10 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+    <EditTextPreference
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_connection_receiveRate_title"
+        android:key="@string/pref_connection_receiveRate_key"
+        android:defaultValue="@string/pref_connection_receiveRate_defaultValue" />
+</PreferenceScreen>

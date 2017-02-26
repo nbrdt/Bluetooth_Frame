@@ -1,0 +1,13 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- A 'parent' preference, which enables/disables child preferences (below)
+         when checked/unchecked. -->
+
+
+    <ListPreference
+        android:defaultValue="@string/pref_view_colors_defaultValue"
+        android:title="@string/pref_view_colors_title"
+        android:entries="@array/android_colors_names"
+        android:entryValues="@array/android_colors"
+        android:key="@string/pref_view_colors_key" />
+</PreferenceScreen>

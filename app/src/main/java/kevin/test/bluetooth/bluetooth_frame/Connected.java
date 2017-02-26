@@ -1,8 +1,10 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -24,6 +26,7 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothCl
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
+import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 
 public class Connected extends AppCompatActivity implements DiagramManager.DataProvider {
     private static final String LOG_TAG = "Connected Activity";
@@ -57,65 +60,96 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
 
         if (addresse != null && !addresse.isEmpty()) {
-
-             client = NFK_ArduinoBluetoothClient.getClient();
-
+            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
             try {
-                client.connectBT(addresse, 1);
-
-                final LinearLayout l = (LinearLayout) findViewById(R.id.activity_connected);
-                l.setBackgroundColor(Color.LTGRAY);
-                final Connected host = this;
-                l.post(new Runnable() {  //the Fragments can only be created, after Layout height can be measured
-                    @Override
-                    public void run() {
-                        int width = l.getWidth();
-                        int height = (int) Math.round(width * 0.6);
-                        Log.i(LOG_TAG, "using following Fragment hosting Properties:" +
-                                " width:" + width +
-                                " height: " + height);
-                        m_globalSettings = new DiagramSettings(null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
-                        m_diagrams = new ArrayList<>(3);
-                        m_diagrams.add(new DiagramSettings(
-                                m_globalSettings.getViewSettings(),
-                                FRAGMENT_TAG_TEMPERATURE,
-                                "°C",
-                                m_globalSettings.getHeight(),
-                                m_globalSettings.getWidth(),
-                                -25,
-                                100));
-                        m_diagrams.add(new DiagramSettings(
-                                m_globalSettings.getViewSettings(),
-                                FRAGMENT_TAG_HUMIDITY,
-                                "%",
-                                m_globalSettings.getHeight(),
-                                m_globalSettings.getWidth(),
-                                0,
-                                100));
-                        m_diagrams.add(new DiagramSettings(
-                                m_globalSettings.getViewSettings(),
-                                FRAGMENT_TAG_SOILMOISTURE,
-                                "%",
-                                m_globalSettings.getHeight(),
-                                m_globalSettings.getWidth(),
-                                0,
-                                100));
-                        m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
-                        m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
-                        Log.i(LOG_TAG, "Diagram Manager has been created");
+                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "")));
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
+                try {
+                    synchronized (this) {
+                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
                     }
-                });
-
-
-            } catch (BluetoothConnectionStateException e) {
-                Log.e(LOG_TAG, "connection Error", e);
-                Toast.makeText(getApplicationContext(), "could not connect Client", Toast.LENGTH_LONG);
+                } catch (InterruptedException e1) {
+                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
+                }
                 finish();
             }
+            if (client != null) {
+                try {
+                    client.connectBT(addresse, 1);
 
+                    final LinearLayout l = (LinearLayout) findViewById(R.id.activity_connected);
+                    l.setBackgroundColor(Color.LTGRAY);
+                    final Connected host = this;
+                    l.post(new Runnable() {  //the Fragments can only be created, after Layout height can be measured
+                        @Override
+                        public void run() {
+                            int width = l.getWidth();
+                            int height = (int) Math.round(width * 0.6);
+                            Log.i(LOG_TAG, "using following Fragment hosting Properties:" +
+                                    " width:" + width +
+                                    " height: " + height);
+                            m_globalSettings = new DiagramSettings(null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
+                            DiagramViewSettings viewSettings = m_globalSettings.getViewSettings();
+                            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
+                            viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "")));
+                            m_globalSettings.setViewSettings(viewSettings);
+                            m_diagrams = new ArrayList<>(3);
+                            m_diagrams.add(new DiagramSettings(
+                                    m_globalSettings.getViewSettings(),
+                                    FRAGMENT_TAG_TEMPERATURE,
+                                    "°C",
+                                    m_globalSettings.getHeight(),
+                                    m_globalSettings.getWidth(),
+                                    -25,
+                                    100));
+                            m_diagrams.add(new DiagramSettings(
+                                    m_globalSettings.getViewSettings(),
+                                    FRAGMENT_TAG_HUMIDITY,
+                                    "%",
+                                    m_globalSettings.getHeight(),
+                                    m_globalSettings.getWidth(),
+                                    0,
+                                    100));
+                            m_diagrams.add(new DiagramSettings(
+                                    m_globalSettings.getViewSettings(),
+                                    FRAGMENT_TAG_SOILMOISTURE,
+                                    "%",
+                                    m_globalSettings.getHeight(),
+                                    m_globalSettings.getWidth(),
+                                    0,
+                                    100));
+                            m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+                            Log.i(LOG_TAG, "Diagram Manager has been created");
+                        }
+                    });
+
+
+                } catch (BluetoothConnectionStateException e) {
+                    Log.e(LOG_TAG, "connection Error", e);
+                    Toast.makeText(getApplicationContext(), "could not connect Client", Toast.LENGTH_LONG);
+                    try {
+                        synchronized (this) {
+                            this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
+                        }
+                    } catch (InterruptedException e1) {
+                        Log.e(LOG_TAG, "Showing error was interrupted", e1);
+                    }
+                    finish();
+                }
+            }
 
         } else {
-            Toast.makeText(getApplicationContext(), "Connection failed", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getApplicationContext(), "Could not read Target Address", Toast.LENGTH_SHORT).show();
+            try {
+                synchronized (this) {
+                    this.wait(1000);  //somehow it doesn't show the toast, if it doesn't get some time for it
+                }
+            } catch (InterruptedException e1) {
+                Log.e(LOG_TAG, "Showing error was interrupted", e1);
+            }
+            finish();
         }
     }
 
@@ -227,7 +261,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        client.destroy();
+        if (client != null) {
+            client.destroy();
+        }
     }
 
     /**

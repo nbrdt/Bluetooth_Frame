@@ -2,6 +2,7 @@ package kevin.test.bluetooth.bluetooth_frame;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -41,6 +42,10 @@ public class Main extends AppCompatActivity {
         Toolbar usedToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(usedToolbar);
         m_actionBar = getSupportActionBar();
+        PreferenceManager.setDefaultValues(this, R.xml.pref_data, false);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_headers, false);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_connection, false);
+        PreferenceManager.setDefaultValues(this, R.xml.pref_view, false);
     }
 
     @Override

@@ -4,17 +4,26 @@
 
     <header
         android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
-        android:icon="@drawable/ic_info_black_24dp"
-        android:title="@string/pref_header_general" />
+        android:title="@string/pref_header_data_title">
+        <extra
+            android:name="use"
+            android:value="data" />
+    </header>
 
     <header
-        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$NotificationPreferenceFragment"
-        android:icon="@drawable/ic_notifications_black_24dp"
-        android:title="@string/pref_header_notifications" />
+        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
+        android:title="@string/pref_header_connection_title">
+        <extra
+            android:name="use"
+            android:value="connection" />
+    </header>
 
     <header
-        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$DataSyncPreferenceFragment"
-        android:icon="@drawable/ic_sync_black_24dp"
-        android:title="@string/pref_header_data_sync" />
+        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
+        android:title="@string/pref_header_view_title">
+        <extra
+            android:name="use"
+            android:value="view" />
+    </header>
 
 </preference-headers>
