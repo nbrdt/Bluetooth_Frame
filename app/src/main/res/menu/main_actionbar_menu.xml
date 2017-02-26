@@ -7,4 +7,6 @@
         android:id="@+id/main_actionbar_menu_item_settings"
         android:icon="@drawable/settings_256_256"
         app:showAsAction="ifRoom" />
+
+
 </menu>
