@@ -89,11 +89,10 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                             Log.i(LOG_TAG, "using following Fragment hosting Properties:" +
                                     " width:" + width +
                                     " height: " + height);
-                            m_globalSettings = new DiagramSettings(null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
-                            DiagramViewSettings viewSettings = m_globalSettings.getViewSettings();
-                            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
+                            DiagramViewSettings viewSettings = DiagramViewSettings.getDefaultSettings();
+                            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);  // ab hier können die Farb einstellungen eingebaut werden
                             viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "")));
-                            m_globalSettings.setViewSettings(viewSettings);
+                            m_globalSettings = new DiagramSettings(viewSettings, null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
                             m_diagrams = new ArrayList<>(3);
                             m_diagrams.add(new DiagramSettings(
                                     m_globalSettings.getViewSettings(),
