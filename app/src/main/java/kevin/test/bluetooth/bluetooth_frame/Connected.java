@@ -5,9 +5,12 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -39,6 +42,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private DiagramSettings m_globalSettings;
     private DiagramManager m_diagramManager;
     private BluetoothDataProvider m_dataProvider;
+    private ActionBar m_actionBar;
 
     private List<DiagramSettings> m_diagrams;
     private List<DataSet> m_dataFromFile = new LinkedList<>();
@@ -123,7 +127,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                             Log.i(LOG_TAG, "Diagram Manager has been created");
                         }
                     });
-
+                    Toolbar usedToolbar = (Toolbar) findViewById(R.id.connected_toolbar);
+                    setSupportActionBar(usedToolbar);
+                    m_actionBar = getSupportActionBar();
 
                 } catch (BluetoothConnectionStateException e) {
                     Log.e(LOG_TAG, "connection Error", e);
@@ -192,30 +198,58 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     }
 
     /**
-     * Called after {@link #onRestoreInstanceState}, {@link #onRestart}, or
-     * {@link #onPause}, for your activity to start interacting with the user.
-     * This is a good place to begin animations, open exclusive-access devices
-     * (such as the camera), etc.
+     * Initialize the contents of the Activity's standard options menu.  You
+     * should place your menu items in to <var>menu</var>.
      * <p>
-     * <p>Keep in mind that onResume is not the best indicator that your activity
-     * is visible to the user; a system window such as the keyguard may be in
-     * front.  Use {@link #onWindowFocusChanged} to know for certain that your
-     * activity is visible to the user (for example, to resume a game).
+     * <p>This is only called once, the first time the options menu is
+     * displayed.  To update the menu every time it is displayed, see
+     * {@link #onPrepareOptionsMenu}.
      * <p>
-     * <p><em>Derived classes must call through to the super class's
-     * implementation of this method.  If they do not, an exception will be
-     * thrown.</em></p>
+     * <p>The default implementation populates the menu with standard system
+     * menu items.  These are placed in the {@link Menu#CATEGORY_SYSTEM} group so that
+     * they will be correctly ordered with application-defined menu items.
+     * Deriving classes should always call through to the base implementation.
+     * <p>
+     * <p>You can safely hold on to <var>menu</var> (and any items created
+     * from it), making modifications to it as desired, until the next
+     * time onCreateOptionsMenu() is called.
+     * <p>
+     * <p>When you add items to the menu, you can implement the Activity's
+     * {@link #onOptionsItemSelected} method to handle them there.
      *
-     * @see #onRestoreInstanceState
-     * @see #onRestart
-     * @see #onPostResume
-     * @see #onPause
+     * @param menu The options menu in which you place your items.
+     * @return You must return true for the menu to be displayed;
+     * if you return false it will not be shown.
+     * @see #onPrepareOptionsMenu
+     * @see #onOptionsItemSelected
      */
     @Override
-    protected void onResume() {
-        super.onResume();
-
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_actionbar_menu, menu);
+        inflater.inflate(R.menu.connected_actionbar_menu, menu);
+        return super.onCreateOptionsMenu(menu);
     }
+
+    /*@Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case (R.id.main_actionbar_menu_item_settings): {
+                Intent startSettings = new Intent(this, SettingsActivity.class);
+                startActivity(startSettings);
+                return true;
+            }
+            case (R.id.connected_actionbar_menu_item_changeDiagram): {
+                changeButtonClicked(new View(this));
+            }
+            case (R.id.connected_actionbar_menu_item_disconnect): {
+                disconnectButtonClicked(new View(this));
+            }
+            default:
+                return super.onOptionsItemSelected(item);
+
+        }
+    }*/
 
     @Override
     public void onStop() {

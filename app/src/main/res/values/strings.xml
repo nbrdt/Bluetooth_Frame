@@ -7,7 +7,10 @@
     <string name="button_disconnect_onClick">disconnectButtonClicked</string>
     <string name="button_connect_defaultText">Connect</string>
     <string name="menu_item_settings">Settings</string>
+    <string name="menu_item_changeDiagram">Change Diagram</string>
+    <string name="menu_item_disconnect">Disconnect</string>
     <string name="title_activity_settings">Settings</string>
+
 
     <!-- Data Preference Strings-->
 

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:title="@string/menu_item_changeDiagram"
+        android:id="@+id/connected_actionbar_menu_item_changeDiagram"
+        app:showAsAction="never" />
+    <item
+        android:title="@string/menu_item_disconnect"
+        android:id="@+id/connected_actionbar_menu_item_disconnect"
+        app:showAsAction="never" />
+
+
+</menu>

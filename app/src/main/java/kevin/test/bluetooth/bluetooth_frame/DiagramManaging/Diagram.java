@@ -11,7 +11,7 @@ import android.widget.Toast;
 import java.util.List;
 
 /**
- * @author NB & KI
+ * @author NB
  * @version 1.1
  */
 
@@ -61,6 +61,7 @@ public class Diagram extends View {
     }
 
     public void onDraw(Canvas canvas) {
+        super.onDraw(canvas);  //always call the super method...
         paint.setColor(viewSettings.getFrameColor());
         paint.setStrokeWidth(viewSettings.getFrameStrokeSize());
         paint.setStyle(viewSettings.getFrameStyle());
@@ -75,34 +76,34 @@ public class Diagram extends View {
             zero = Math.round(center + ((settings.getMax() + settings.getMin()) / 2) * yMeasurement);
             canvas.drawLine(0, zero, settings.getWidth(), zero, paint);
             canvas.drawText("0" + settings.getUnit(), paint.getTextSize() / 2, zero + paint.getTextSize(), paint);
+
+
+            canvas.drawLine(0, center, settings.getWidth(), center, paint);
+            canvas.drawText(((settings.getMax() + settings.getMin()) / 2) + settings.getUnit(), paint.getTextSize() / 2, center + paint.getTextSize(), paint);
+
+
+            //oberste Orientierungslinie
+            canvas.drawLine(0, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
+            canvas.drawText(settings.getMax() + settings.getUnit(), paint.getTextSize() / 2, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement) + paint.getTextSize(), paint);
+
+            //unterste Orientierungslinie
+            canvas.drawLine(0, center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
+            canvas.drawText(settings.getMin() + settings.getUnit(), paint.getTextSize() / 2, center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement) - paint.getTextSize(), paint);
+
+
+            paint.setColor(viewSettings.getGraphColor());
+            paint.setStrokeWidth(viewSettings.getGraphStrokeSize());
+            paint.setStyle(viewSettings.getGraphStyle());
+            for (int i = 0; i < werte.size() - 1; i++) {
+                canvas.drawLine(i * xMeasurement, toYPosition(werte.get(i)), (i + 1) * xMeasurement, toYPosition(werte.get(i + 1)), paint);
+                canvas.drawCircle(i * xMeasurement, toYPosition(werte.get(i)), paint.getStrokeWidth() * 1.5f, paint);
+            }
+
+            paint.setColor(viewSettings.getCursorColor());
+            paint.setStrokeWidth(viewSettings.getCursorStrokeSize());
+            paint.setStyle(viewSettings.getCursorStyle());
+            canvas.drawLine(xClickPosition, 0, xClickPosition, settings.getHeight(), paint);
         }
-
-        canvas.drawLine(0, center, settings.getWidth(), center, paint);
-        canvas.drawText(((settings.getMax() + settings.getMin()) / 2) + settings.getUnit(), paint.getTextSize() / 2, center + paint.getTextSize(), paint);
-
-
-
-        //oberste Orientierungslinie
-        canvas.drawLine(0, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
-        canvas.drawText(settings.getMax() + settings.getUnit(), paint.getTextSize() / 2, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement) + paint.getTextSize(), paint);
-
-        //unterste Orientierungslinie
-        canvas.drawLine(0, center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
-        canvas.drawText(settings.getMin() + settings.getUnit(), paint.getTextSize() / 2, center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement) - paint.getTextSize(), paint);
-
-
-        paint.setColor(viewSettings.getGraphColor());
-        paint.setStrokeWidth(viewSettings.getGraphStrokeSize());
-        paint.setStyle(viewSettings.getGraphStyle());
-        for(int i = 0; i < werte.size()-1; i++) {
-            canvas.drawLine(i*xMeasurement, toYPosition(werte.get(i)), (i+1)*xMeasurement, toYPosition(werte.get(i+1)), paint);
-            canvas.drawCircle(i*xMeasurement, toYPosition(werte.get(i)), paint.getStrokeWidth()*1.5f, paint);
-        }
-
-        paint.setColor(viewSettings.getCursorColor());
-        paint.setStrokeWidth(viewSettings.getCursorStrokeSize());
-        paint.setStyle(viewSettings.getCursorStyle());
-        canvas.drawLine(xClickPosition, 0, xClickPosition, settings.getHeight(), paint);
     }
 
     //Bei Berühren des Diagramms soll ein "Cursor" verschoben werden, mit dem die genauen Werte angezeigt werden
