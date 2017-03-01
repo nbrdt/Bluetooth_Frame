@@ -319,13 +319,17 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         Date current = Calendar.getInstance().getTime();
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
-        for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
-            BluetoothDataSet data = m_bluetoothData.get(i);
-            if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
-                temp.addFirst(data);
-            } else {
-                break;  //just to increase Performance
+        if (maxBack > 0) {
+            for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
+                BluetoothDataSet data = m_bluetoothData.get(i);
+                if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
+                    temp.addFirst(data);
+                } else {
+                    break;  //just to increase Performance
+                }
             }
+        } else {
+            temp = (LinkedList<BluetoothDataSet>) m_bluetoothData;
         }
         prepareLists(temp.size());
         for (BluetoothDataSet data :  //adding everything to the Lists
