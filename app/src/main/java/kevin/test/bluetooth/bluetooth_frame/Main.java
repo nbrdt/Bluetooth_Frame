@@ -1,6 +1,7 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.ActionBar;
@@ -11,10 +12,10 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
 public class Main extends AppCompatActivity {
@@ -30,22 +31,19 @@ public class Main extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         m_client = NFK_ArduinoBluetoothClient.getClient();
-        setContentView(R.layout.main);
-        m_buttonShowPaired = (Button) findViewById(R.id.main_button_connect);
-        m_buttonShowPaired.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent showAddresses = new Intent(Main.this, DeviceList.class);
-                startActivity(showAddresses);
-            }
-        });
+        setContentView(R.layout.activity_main);
         Toolbar usedToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         setSupportActionBar(usedToolbar);
         m_actionBar = getSupportActionBar();
-        PreferenceManager.setDefaultValues(this, R.xml.pref_data, false);
-        PreferenceManager.setDefaultValues(this, R.xml.pref_headers, false);
-        PreferenceManager.setDefaultValues(this, R.xml.pref_connection, false);
-        PreferenceManager.setDefaultValues(this, R.xml.pref_view, false);
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_data, false);
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_headers, false);
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_connection, false);
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_view, false);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
     }
 
     @Override
@@ -57,6 +55,10 @@ public class Main extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(this);
+        if (preference.getBoolean(SettingsActivity.KEY_DATA_DELETEONFINISH, true)) {
+            (new BluetoothDataProvider(getApplicationContext())).deleteAll();
+        }
         if (m_client != null) {
             m_client.destroy();
             m_client = null;
@@ -64,6 +66,11 @@ public class Main extends AppCompatActivity {
         if (m_buttonShowPaired != null) {
             m_buttonShowPaired = null;
         }
+    }
+
+    public void showDeviceListClicked(View v) {
+        Intent showAddresses = new Intent(Main.this, DeviceList.class);
+        startActivity(showAddresses);
     }
 
     private void showMessageBox(String message) {

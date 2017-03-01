@@ -18,11 +18,24 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * writes and reads Data File of name received_data:
+ * with Content like:
+ * ####
+ * Date:Tue Feb 28 14:56:20 GMT+01:00 2017
+ * Temperature:20.2000000000
+ * Humidity:56.2000000000
+ * Soil Moisture:37.7500000000
+ * ####
+ * Date:Tue Feb 28 18:23:19 GMT+01:00 2017
+ * Temperature:49.8571428571
+ * Humidity:50.5000000000
+ * Soil Moisture:37.5714285714
  * @author KI
- * @version 1.0a
+ * @version 1.1a
  **/
 public class BluetoothDataProvider {
     private static final String DATAFILE_NAME = "received_data";
+    private static final String INDICATOR_SETSEPARATOR = "####";
     private static final String INDICATOR_TIME = "Date:";
     private static final String INDICATOR_TEMP = "Temperature:";
     private static final String INDICATOR_HUMID = "Humidity:";
@@ -45,29 +58,24 @@ public class BluetoothDataProvider {
             throw new IllegalArgumentException("Can't manage Data without an context");
         }
         m_Data = new File(m_fileDirectory, DATAFILE_NAME);
-        m_formatter = DateFormat.getDateInstance();
+        m_formatter = DateFormat.getDateTimeInstance();
+        Log.i(LOG_TAG, "Path:" + m_Data.getAbsolutePath());
     }
 
-    public List<DataSet> readData(boolean leaveInputStreamOpen) throws UnrecognizableBluetoothDataException {
-        if (m_FileReader == null) {
-            try {
-                m_FileReader = new LineNumberReader(new FileReader(m_Data));
-            } catch (FileNotFoundException e) {
-                throw new UnrecognizableBluetoothDataException("Could not resolve File", e);
-            }
-        }
-        List<DataSet> readData = new LinkedList<>();
+    private List<BluetoothDataSet> readData(boolean leaveInputStreamOpen) throws UnrecognizableBluetoothDataException {
+        checkAndRecreate(true, false);  //throws UnrecognizableBluetoothDataException
+        List<BluetoothDataSet> readData = new LinkedList<>();
         try {
             //m_FileReader.reset();
             String read;
             do {
                 read = m_FileReader.readLine();
-                if (read != null && read.equalsIgnoreCase("####")) {
-                    Date date = readDate(m_FileReader, INDICATOR_TIME);
-                    BigDecimal temperature = readValue(m_FileReader, INDICATOR_TEMP);
-                    BigDecimal humidity = readValue(m_FileReader, INDICATOR_HUMID);
-                    BigDecimal soilMoisture = readValue(m_FileReader, INDICATOR_SOIL);
-                    readData.add(new DataSet(date, temperature, humidity, soilMoisture));
+                if (read != null && read.equalsIgnoreCase(INDICATOR_SETSEPARATOR)) {
+                    Date date = readDate(INDICATOR_TIME);
+                    BigDecimal temperature = readValue(INDICATOR_TEMP);
+                    BigDecimal humidity = readValue(INDICATOR_HUMID);
+                    BigDecimal soilMoisture = readValue(INDICATOR_SOIL);
+                    readData.add(new BluetoothDataSet(date, temperature, humidity, soilMoisture));
                 }
             } while (read != null);
         } catch (IOException e) {
@@ -84,7 +92,7 @@ public class BluetoothDataProvider {
         return readData;
     }
 
-    public void writeData(List<DataSet> toWrite, boolean leaveOutputStreamOpen) {
+    private void writeData(List<BluetoothDataSet> toWrite, boolean leaveOutputStreamOpen) {
         if (m_FileWriter == null) {
             try {
                 m_FileWriter = new PrintWriter(new FileWriter(m_Data), true);
@@ -93,9 +101,10 @@ public class BluetoothDataProvider {
                 return;
             }
         }
-        for (DataSet data :
+        m_FileWriter.println("");
+        for (BluetoothDataSet data :
                 toWrite) {
-            m_FileWriter.println("####");
+            m_FileWriter.println(INDICATOR_SETSEPARATOR);
             writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
             writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
             writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
@@ -107,15 +116,20 @@ public class BluetoothDataProvider {
         }
     }
 
-    public List<DataSet> readData() throws UnrecognizableBluetoothDataException {
+    public List<BluetoothDataSet> readData() throws UnrecognizableBluetoothDataException {
         return readData(false);
     }
 
-    public void writeData(List<DataSet> toWrite) {
+    public void writeData(List<BluetoothDataSet> toWrite) {
         writeData(toWrite, false);
     }
+
+    public void deleteAll() {
+        m_Data.delete();
+    }
+
     /* somehow not working... working on it
-    public void writeDataToEnd (List<DataSet> toWrite, boolean leaveOutputStreamOpen) {
+    public void writeDataToEnd (List<BluetoothDataSet> toWrite, boolean leaveOutputStreamOpen) {
         if (m_FileWriter == null) {
             try {
                 m_FileWriter = new PrintWriter(new FileWriter(m_Data), true);
@@ -124,7 +138,7 @@ public class BluetoothDataProvider {
                 return;
             }
         }
-        for (DataSet data :
+        for (BluetoothDataSet data :
                 toWrite) {
             m_FileWriter.println("####");
             writeDateToEnd(INDICATOR_TIME, data.getTimeStamp());
@@ -138,8 +152,8 @@ public class BluetoothDataProvider {
         }
     }*/
 
-    private BigDecimal readValue(LineNumberReader reader, String indicator) throws IOException, UnrecognizableBluetoothDataException {
-        String read = reader.readLine();
+    private BigDecimal readValue(String indicator) throws IOException, UnrecognizableBluetoothDataException {
+        String read = m_FileReader.readLine();
         if (read != null && read.contains(indicator)) {
             String[] parts = read.split(indicator);
             return new BigDecimal(parts[1]);
@@ -148,8 +162,8 @@ public class BluetoothDataProvider {
         }
     }
 
-    private Date readDate(LineNumberReader reader, String indicator) throws IOException, UnrecognizableBluetoothDataException {
-        String read = reader.readLine();
+    private Date readDate(String indicator) throws IOException, UnrecognizableBluetoothDataException {
+        String read = m_FileReader.readLine();
         if (read != null && read.contains(indicator)) {
             String[] parts = read.split(indicator);
             Date parsed;
@@ -166,12 +180,48 @@ public class BluetoothDataProvider {
 
     private void writeValue(PrintWriter writer, String indicator, BigDecimal toWrite) {
         writer.print(indicator);
-        writer.println(toWrite.toString());
+        String numberToWrite = toWrite.toString();
+        Log.v(LOG_TAG, "Writing Number:" + numberToWrite);
+        writer.println(numberToWrite);
     }
 
     private void writeDate(PrintWriter writer, String indicator, Date toWrite) {
         writer.print(indicator);
-        writer.println(m_formatter.format(toWrite));
+        String date = m_formatter.format(toWrite);
+        Log.v(LOG_TAG, "Writing Date:" + toWrite);
+        writer.println(date);
+    }
+
+    private void checkAndRecreate(boolean leaveReadStreamOpen, boolean leaveWriteStreamOpen) throws UnrecognizableBluetoothDataException {
+        try {
+            m_FileReader = new LineNumberReader(new FileReader(m_Data));
+        } catch (FileNotFoundException e) {
+            if (m_FileWriter == null) {
+                try {
+                    m_FileWriter = new PrintWriter(new FileWriter(m_Data), true);
+                } catch (IOException e1) {
+                    throw new UnrecognizableBluetoothDataException("Could not resolve File", e1);
+                }
+            }
+            m_FileWriter.println("");
+            try {
+                m_FileReader = new LineNumberReader(new FileReader(m_Data));
+            } catch (FileNotFoundException e1) {
+                throw new UnrecognizableBluetoothDataException("Could not resolve File", e1);
+            }
+        }
+        if (!leaveReadStreamOpen && m_FileReader != null) {
+            try {
+                m_FileReader.close();
+            } catch (IOException e) {
+                Log.e(LOG_TAG, "Could not close File, destroying reference anyway", e);
+            }
+            m_FileReader = null;
+        }
+        if (!leaveWriteStreamOpen && m_FileWriter != null) {
+            m_FileWriter.close();
+            m_FileWriter = null;
+        }
     }
     /*somehow not working... working on it
     private void writeValueToEnd (String indicator, BigDecimal toWrite) {

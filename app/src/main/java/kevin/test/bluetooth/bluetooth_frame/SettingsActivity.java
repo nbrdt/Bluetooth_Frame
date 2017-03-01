@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.support.annotation.NonNull;
 import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
@@ -21,7 +22,12 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -37,6 +43,7 @@ import java.util.List;
 public class SettingsActivity extends AppCompatPreferenceActivity {
     public static final String KEY_VIEW_CURSORCOLOR = "draw_color";
     public static final String KEY_DATA_DELETEONFINISH = "delete_on_finish";
+    public static final String KEY_DATA_SHOWVALUES = "show_values";
     public static final String KEY_CONNECTION_RECEIVERATE = "receive_data_rate";
 
     /**
@@ -87,18 +94,62 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
      *
      * @see #sBindPreferenceSummaryToValueListener
      */
-    private static void bindPreferenceSummaryToValue(Preference preference) {
+    private static void bindPreferenceSummaryToValue(Preference preference, String type) {
         // Set the listener to watch for value changes
         if (preference != null) {
             preference.setOnPreferenceChangeListener(sBindPreferenceSummaryToValueListener);
 
             // Trigger the listener immediately with the preference's
             // current value.
-            sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
-                    PreferenceManager
-                            .getDefaultSharedPreferences(preference.getContext())
-                            .getString(preference.getKey(), ""));
+            switch (type) {
+                case ("String"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getString(preference.getKey(), null));
+                    break;
+                }
+                case ("boolean"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getBoolean(preference.getKey(), true));
+                    break;
+                }
+                case ("integer"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getInt(preference.getKey(), -1));
+                    break;
+                }
+                case ("long"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getLong(preference.getKey(), -1));
+                    break;
+                }
+                case ("float"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getFloat(preference.getKey(), -1.0f));
+                    break;
+                }
+                case ("StringSet"): {
+                    sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
+                            PreferenceManager
+                                    .getDefaultSharedPreferences(preference.getContext())
+                                    .getStringSet(preference.getKey(), new TreeSet<String>()));
+                    break;
+                }
+            }
         }
+    }
+
+    private static void bindPreferenceSummaryToValue(Preference preference) {
+        bindPreferenceSummaryToValue(preference, "String");
     }
 
     @Override
@@ -198,15 +249,16 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 if (purpose != null) {
                     switch (purpose) {
                         case ("view"): {
-                            bindPreferenceSummaryToValue(findPreference("draw_color"));
+                            bindPreferenceSummaryToValue(findPreference(KEY_VIEW_CURSORCOLOR));
                             break;
                         }
                         case ("data"): {
-                            bindPreferenceSummaryToValue(findPreference("receive_data_rate"));
+                            bindPreferenceSummaryToValue(findPreference(KEY_DATA_DELETEONFINISH), "boolean");
+                            bindPreferenceSummaryToValue(findPreference(KEY_DATA_SHOWVALUES));
                             break;
                         }
                         case ("connection"): {
-                            bindPreferenceSummaryToValue(findPreference("delete_on_finish"));
+                            bindPreferenceSummaryToValue(findPreference(KEY_CONNECTION_RECEIVERATE));
                             break;
                         }
                         default: {
@@ -228,7 +280,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
         private void defaultSummary() {
             Log.w("Gen-Preference Fragment", "Had to use default summary's");
-            bindPreferenceSummaryToValue(findPreference("delete_on_finish"));
+            bindPreferenceSummaryToValue(findPreference(KEY_CONNECTION_RECEIVERATE));
         }
 
         @Override

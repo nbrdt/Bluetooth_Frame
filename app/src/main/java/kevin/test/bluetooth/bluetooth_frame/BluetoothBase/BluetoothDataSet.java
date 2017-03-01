@@ -3,12 +3,10 @@ package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
   *@version 0.0 from 05.02.2017 in Bluetooth_Frame
  **/
 
-import android.support.annotation.NonNull;
-
 import java.math.BigDecimal;
 import java.util.Date;
 
-public final class DataSet implements Comparable<DataSet>, Cloneable, BluetoothConstants {  //immutable object
+public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Cloneable, BluetoothConstants {  //immutable object
     private final Date timeStamp;
     private final BigDecimal temperature;
     private final BigDecimal humidity;
@@ -19,7 +17,7 @@ public final class DataSet implements Comparable<DataSet>, Cloneable, BluetoothC
     public static final char ARDUINO_INDICATOR_TEMPERATURE = 'T';
     public static final int  DATA_PRECISION = 10;
 
-    public DataSet(Date timeStamp, BigDecimal temperature, BigDecimal humidity, BigDecimal soilMoisture) {
+    public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal humidity, BigDecimal soilMoisture) {
         this.timeStamp = timeStamp;
         this.temperature = temperature;
         this.humidity = humidity;
@@ -82,12 +80,12 @@ public final class DataSet implements Comparable<DataSet>, Cloneable, BluetoothC
      * @see Cloneable
      */
     @Override
-    protected DataSet clone() {
-        return new DataSet(timeStamp,temperature,humidity,soilMoisture);
+    protected BluetoothDataSet clone() {
+        return new BluetoothDataSet(timeStamp, temperature, humidity, soilMoisture);
     }
 
     /**
-     * Returns the creation time of this DataSet
+     * Returns the creation time of this BluetoothDataSet
      *
      * @return the timeStamp as an Date object
      */
@@ -108,15 +106,15 @@ public final class DataSet implements Comparable<DataSet>, Cloneable, BluetoothC
     }
 
     /**
-     * This will convert all necessary Data, which is contained by this DataSet, into Strings and
-     * returns them. This is not meant for retrieving a copy of this DataSet, just for debugging purposes. If
+     * This will convert all necessary Data, which is contained by this BluetoothDataSet, into Strings and
+     * returns them. This is not meant for retrieving a copy of this BluetoothDataSet, just for debugging purposes. If
      * you would like to retrieve a copy, use .clone
      *
-     * @return The String representation of this DataSet
+     * @return The String representation of this BluetoothDataSet
      */
     @Override
     public String toString() {
-        return "DataSet{" +
+        return "BluetoothDataSet{" +
                 "timeStamp=" + timeStamp.toString() +
                 ", temperature=" + temperature.toString() +
                 ", humidity=" + humidity.toString() +
@@ -163,7 +161,7 @@ public final class DataSet implements Comparable<DataSet>, Cloneable, BluetoothC
      *                              from being compared to this object.
      */
     @Override
-    public int compareTo(DataSet toCompare) {
+    public int compareTo(BluetoothDataSet toCompare) {
         return this.getTimeStamp().compareTo(toCompare.getTimeStamp());
     }
 }

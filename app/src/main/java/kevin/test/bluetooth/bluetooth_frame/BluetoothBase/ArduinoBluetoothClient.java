@@ -17,9 +17,9 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
    * This therefore decreases Performance to at least the Number of Dataset's, which has been recieved since the last call of clearReceivedData.
    * Consequently, it is recommended to Read and clear the Data in regular intervals.
    *
-   * @return List of DataSet which represents the received Data, in case of no received Data, this will return a null Object reference
+   * @return List of BluetoothDataSet which represents the received Data, in case of no received Data, this will return a null Object reference
    **/
-    public List<DataSet> getReceivedData();
+  public List<BluetoothDataSet> getReceivedData();
 
   /**
    * Clears the internal representation of the receivedData List.

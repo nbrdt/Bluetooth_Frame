@@ -22,7 +22,7 @@ import static java.lang.Character.isDigit;
  **/
 
 public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implements ArduinoBluetoothClient{
-    private List<DataSet> m_receivedData;
+    private List<BluetoothDataSet> m_receivedData;
     private BufferedReader m_Reader;
     private BufferedWriter m_Writer;
     private Timer m_MessageTimer;
@@ -35,7 +35,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     private NFK_ArduinoBluetoothClient(long scheduleRate, long timerOffset) {
         super(ARDUINO_CHARSET);
         setListener(new ArduinoConnectionListener());
-        m_receivedData = new LinkedList<DataSet>();
+        m_receivedData = new LinkedList<BluetoothDataSet>();
         m_Reader = null;
         m_Writer = null;
         m_ScheduleRate = scheduleRate;
@@ -67,11 +67,11 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     /**
      * Copys and returns the received Data since the last call of clear received Data.
-     * @return a List of DataSet's containing the received Data, if there is no received Data available, it will return null.
+     * @return a List of BluetoothDataSet's containing the received Data, if there is no received Data available, it will return null.
      * @throws ArduinoProtocolException if an much too high amount of numbers had to be overread and an connection to the wrong device is suspected.
      */
     @Override
-    public List<DataSet> getReceivedData() {
+    public List<BluetoothDataSet> getReceivedData() {
         if (((double) m_falseProtocolSinceClear / m_readSinceClear) >= ((double) 0.8)) {
             throw new ArduinoProtocolException("Giant number of misreads - wrong device connected", m_falseProtocolSinceClear, m_readSinceClear);
         }
@@ -144,9 +144,9 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         throw new UnsupportedOperationException("you may not interfere with internal reading");
     }
 
-    private List<DataSet> copyData(List<DataSet> toCopy) {
-        List<DataSet> clone = new Vector<DataSet>();
-        for (DataSet data :
+    private List<BluetoothDataSet> copyData(List<BluetoothDataSet> toCopy) {
+        List<BluetoothDataSet> clone = new Vector<BluetoothDataSet>();
+        for (BluetoothDataSet data :
                 toCopy) {
             clone.add(data.clone());
         }
@@ -216,7 +216,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         BigDecimal humidity = calculateMedian(pm_Humids, "Humidity");
                         BigDecimal soilMoisture = calculateMedian(pm_Mois,"Soil Moisture");
                         Date time = Calendar.getInstance().getTime();
-                        DataSet toAdd = new DataSet(time, temperature, humidity, soilMoisture);
+                        BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, humidity, soilMoisture);
                         m_receivedData.add(toAdd);
                         clearLists();
                     }
@@ -232,7 +232,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             for (Integer i = 0; ((i + 1) < received) && ((i + 1) < bufferedInput.length); i++) {
                 boolean read = false;
                 switch (bufferedInput[i]) {
-                    case (DataSet.ARDUINO_INDICATOR_HUMIDITY): {  // notices a Humidity Indicator -> next has to be corresponding value
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_HUMIDITY): {  // notices a Humidity Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
@@ -249,7 +249,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         }
                         break;
                     }
-                    case (DataSet.ARDUINO_INDICATOR_TEMPERATURE): {  // notices a Temperature Indicator -> next has to be corresponding value
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_TEMPERATURE): {  // notices a Temperature Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
@@ -266,7 +266,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         }
                         break;
                     }
-                    case (DataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
@@ -297,13 +297,13 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         private void addStringToList(List<BigDecimal> list, String toAdd) {
             Log.v(LOG_TAG, "Adding: " + toAdd);   // shows the received Value
             BigDecimal toInsert = new BigDecimal(toAdd);  //creates a BigDecimal from the received Value
-            toInsert = toInsert.setScale(DataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);  // sets this BegDecimals-DiagramSettings
+            toInsert = toInsert.setScale(BluetoothDataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);  // sets this BegDecimals-DiagramSettings
             list.add(toInsert);  //adds the BigDecimal
         }
 
         private BigDecimal calculateMedian(List<BigDecimal> list, String listName) {
             BigDecimal tempCalculator = new BigDecimal(0);
-            tempCalculator = tempCalculator.setScale(DataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);
+            tempCalculator = tempCalculator.setScale(BluetoothDataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);
             for (BigDecimal value:
                     list) {
                 tempCalculator = tempCalculator.add(value);

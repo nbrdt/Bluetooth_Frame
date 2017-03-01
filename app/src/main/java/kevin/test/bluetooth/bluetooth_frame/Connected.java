@@ -12,19 +12,20 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothConnectionStateException;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
-import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.DataSet;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
@@ -45,8 +46,8 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private ActionBar m_actionBar;
 
     private List<DiagramSettings> m_diagrams;
-    private List<DataSet> m_dataFromFile = new LinkedList<>();
-    private List<DataSet> m_dataReceived = new LinkedList<>();
+    private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
+    private List<BluetoothDataSet> m_dataReceived = new LinkedList<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
     private ArrayList<Integer> m_humidityValues = new ArrayList<>();
     private ArrayList<Integer> m_soilValues = new ArrayList<>();
@@ -56,7 +57,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_connected);
-        refreshButton = (Button) findViewById(R.id.refreshButton);
         m_dataProvider = new BluetoothDataProvider(getApplicationContext());
         String addresse = getIntent().getExtras().getString("addresse");
 
@@ -66,7 +66,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
             try {
-                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "")));
+                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
                 try {
@@ -95,7 +95,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                     " height: " + height);
                             DiagramViewSettings viewSettings = DiagramViewSettings.getDefaultSettings();
                             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);  // ab hier können die Farb einstellungen eingebaut werden
-                            viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "")));
+                            viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "-65536")));
                             m_globalSettings = new DiagramSettings(viewSettings, null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
                             m_diagrams = new ArrayList<>(3);
                             m_diagrams.add(new DiagramSettings(
@@ -159,7 +159,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     }
 
 
-    public void changeButtonClicked(View v) {
+    public void changeButtonClicked() {
         if (m_diagramManager.getShown() != null) {
             if (m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
                 m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
@@ -173,24 +173,24 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         }
     }
 
-    public void disconnectButtonClicked(View v) {
+    public void disconnectButtonClicked() {
         finish();
     }
 
     @Override
     public void onStart() {
         super.onStart();
+
         try {
-            m_dataFromFile = m_dataProvider.readData();
+            m_bluetoothData = m_dataProvider.readData();
         } catch (UnrecognizableBluetoothDataException e) {
             Log.e(LOG_TAG, "Data could not be read", e);
         }
-        m_dataReceived = new LinkedList<>();  //there cannot be any received Data...
-        m_temperatureValues = new ArrayList<>(m_dataFromFile.size());
-        m_humidityValues = new ArrayList<>(m_dataFromFile.size());
-        m_soilValues = new ArrayList<>(m_dataFromFile.size());
-        for (DataSet data :
-                m_dataFromFile) {
+        m_temperatureValues = new ArrayList<>();
+        m_humidityValues = new ArrayList<>();
+        m_soilValues = new ArrayList<>();
+        for (BluetoothDataSet data :
+                m_bluetoothData) {
             m_temperatureValues.add(data.getTemperature().intValue());
             m_humidityValues.add(data.getHumidity().intValue());
             m_soilValues.add(data.getSoilMoisture().intValue());
@@ -231,7 +231,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         return super.onCreateOptionsMenu(menu);
     }
 
-    /*@Override
+    @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case (R.id.main_actionbar_menu_item_settings): {
@@ -240,27 +240,26 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                 return true;
             }
             case (R.id.connected_actionbar_menu_item_changeDiagram): {
-                changeButtonClicked(new View(this));
+                this.changeButtonClicked();
+                return true;
             }
             case (R.id.connected_actionbar_menu_item_disconnect): {
-                disconnectButtonClicked(new View(this));
+                this.disconnectButtonClicked();
+                return true;
             }
-            default:
+            default: {
                 return super.onOptionsItemSelected(item);
-
+            }
         }
-    }*/
+    }
 
     @Override
     public void onStop() {
         super.onStop();
-        for (DataSet data :
-                m_dataReceived) {
-            m_dataFromFile.add(data);
-        }
-        m_dataProvider.writeData(m_dataFromFile, false);
+        m_dataProvider.writeData(m_bluetoothData);
         m_dataReceived.clear(); //just to give some space back to the System in case, the user leaves but reenters, so that the user can have some more space
-        m_dataFromFile.clear();
+        m_bluetoothData.clear();
+
     }
 
     /**
@@ -306,18 +305,24 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
      */
     @Override
     public void onBackPressed() {
-        if (!m_diagramManager.remove()) {
-            if (getFragmentManager().getBackStackEntryCount() > 0) {
-                getFragmentManager().popBackStack();
-            } else {
-                super.onBackPressed();
-            }
+        if (getFragmentManager().getBackStackEntryCount() > 0) {
+            getFragmentManager().popBackStack();
+        } else {
+            super.onBackPressed();
         }
     }
 
     @Override
     public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription) {
         refreshData();
+        List<BluetoothDataSet> temp = new LinkedList<>();
+        Date current = Calendar.getInstance().getTime();
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
+        for (BluetoothDataSet data :
+                m_bluetoothData) {
+
+        }
         switch (fragmentDescription.getName()) {
             case (FRAGMENT_TAG_TEMPERATURE): {
                 return copyValues(m_temperatureValues);
@@ -332,14 +337,13 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         return null;
     }
 
-
     private void refreshData() {
-        List<DataSet> received = client.getReceivedData();
+        List<BluetoothDataSet> received = client.getReceivedData();
         if (received != null) {
             client.clearReceivedData();
-            for (DataSet data :
+            for (BluetoothDataSet data :
                     received) {
-                m_dataReceived.add(data);
+                m_bluetoothData.add(data);
                 m_temperatureValues.add(data.getTemperature().intValue());
                 m_humidityValues.add(data.getHumidity().intValue());
                 m_soilValues.add(data.getSoilMoisture().intValue());

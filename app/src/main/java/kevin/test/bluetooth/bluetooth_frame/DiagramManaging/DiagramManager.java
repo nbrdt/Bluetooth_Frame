@@ -36,7 +36,7 @@ public class DiagramManager {
                     requester.updateDiagram(refresher.onRefreshRequest(requester.getSettings()));
                 }
             }
-        };  //TODO implment own BackStack, which contains used Fragments, sothat the references aren't null anymore. Manage in onBackstackListener.
+        };  
     }
 
     public DiagramManager(Activity hostActivity, int rootViewId, List<DiagramSettings> diagrams, DataProvider refresher) {
@@ -57,7 +57,7 @@ public class DiagramManager {
             m_current = replaceFragment;
         }
         m_current.setRefreshListener(m_diagramRefresher);
-        //fragmentTransaction.addToBackStack(settings.getName());
+        //fragmentTransaction.addToBackStack(settings.getName());  //das Diagramm soll mmer angezeigt werden: daher kein Back stack
         fragmentTransaction.commit();
     }
 

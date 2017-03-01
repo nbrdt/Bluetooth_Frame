@@ -7,6 +7,9 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -41,18 +44,9 @@ public class DiagramFragment extends Fragment {
     private TextView m_nameView;
     private LinearLayout m_rootView;
     private Diagram m_diagram;
-    private Button m_refreshButton;
     private RelativeLayout m_extraContainer;
     private RefreshListener m_refreshListener;
     private DiagramFragment thisFragment = this;
-    private Button.OnClickListener m_refreshOnClickListener = new Button.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            if (m_refreshListener != null) {
-                m_refreshListener.onRefreshRequest(thisFragment);
-            }
-        }
-    };
 
     private Context m_attachContext;
     private ArrayList<Integer> m_values;
@@ -133,6 +127,7 @@ public class DiagramFragment extends Fragment {
             DiagramViewSettings viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS));
             m_settings = new DiagramSettings(viewSettings, name, unit, height, width, min, max);
         }
+        setHasOptionsMenu(true);
     }
 
     @Override
@@ -151,11 +146,60 @@ public class DiagramFragment extends Fragment {
         return m_rootView;
     }
 
+    /**
+     * Initialize the contents of the Activity's standard options menu.  You
+     * should place your menu items in to <var>menu</var>.  For this method
+     * to be called, you must have first called {@link #setHasOptionsMenu}.  See
+     * Activity.onCreateOptionsMenu
+     * for more information.
+     *
+     * @param menu     The options menu in which you place your items.
+     * @param inflater
+     * @see #setHasOptionsMenu
+     * @see #onPrepareOptionsMenu
+     * @see #onOptionsItemSelected
+     */
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.diagramfragment_actionbar_menu, menu);
+        super.onCreateOptionsMenu(menu, inflater);
+    }
 
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         m_attachContext = context;
+    }
+
+    /**
+     * This hook is called whenever an item in your options menu is selected.
+     * The default implementation simply returns false to have the normal
+     * processing happen (calling the item's Runnable or sending a message to
+     * its Handler as appropriate).  You can use this method for any items
+     * for which you would like to do processing without those other
+     * facilities.
+     * <p>
+     * <p>Derived classes should call through to the base class for it to
+     * perform the default menu handling.
+     *
+     * @param item The menu item that was selected.
+     * @return boolean Return false to allow normal menu processing to
+     * proceed, true to consume it here.
+     * @see #onCreateOptionsMenu
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case (R.id.diagramfragment_actionbar_menu_item_refresh): {
+                if (m_refreshListener != null) {
+                    m_refreshListener.onRefreshRequest(thisFragment);
+                }
+                return true;
+            }
+            default: {
+                return super.onOptionsItemSelected(item);
+            }
+        }
     }
 
     /**
@@ -190,10 +234,6 @@ public class DiagramFragment extends Fragment {
         m_values = null;
     }
 
-    public void addToDiagram(Integer valueToAdd) {
-        m_values.add(valueToAdd);
-    }
-
     public void updateDiagram(ArrayList<Integer> newValues) {
         m_values = newValues;
         updateDiagram();
@@ -206,13 +246,11 @@ public class DiagramFragment extends Fragment {
 
     private void removeFromExtraContainer() {
         m_extraContainer.removeView(m_nameView);
-        m_extraContainer.removeView(m_refreshButton);
     }
 
     private void createLayout() {
         drawExtraContainer();
         drawTextName();
-        drawRefreshButton();
         drawDiagram();
     }
 
@@ -244,18 +282,6 @@ public class DiagramFragment extends Fragment {
         m_nameView.setLayoutParams(params);
         m_nameView.setId(View.NO_ID);
         this.m_extraContainer.addView(m_nameView);
-    }
-
-    private void drawRefreshButton() {
-        this.m_refreshButton = new Button(m_extraContainer.getContext());
-        m_refreshButton.setText(R.string.button_refresh_defaultText);
-        m_refreshButton.setOnClickListener(m_refreshOnClickListener);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        params.addRule(RelativeLayout.CENTER_VERTICAL);
-        params.addRule(RelativeLayout.ALIGN_PARENT_RIGHT);
-        m_refreshButton.setLayoutParams(params);
-        m_refreshButton.setId(View.NO_ID);
-        this.m_extraContainer.addView(m_refreshButton);
     }
 
     public interface RefreshListener {

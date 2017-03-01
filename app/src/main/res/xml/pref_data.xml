@@ -5,4 +5,10 @@
         android:title="@string/pref_data_deleteDataOnFinish_title"
         android:key="@string/pref_data_deleteDataOnFinish_key"
         android:defaultValue="@string/pref_data_deleteDataOnFinish_defaultValue" />
+    <ListPreference
+        android:defaultValue="@string/pref_data_showValues_defaultValue"
+        android:title="@string/pref_data_showValues_title"
+        android:entries="@array/pref_data_showValues_names"
+        android:entryValues="@array/pref_data_showValues"
+        android:key="@string/pref_data_showValues_key" />
 </PreferenceScreen>
