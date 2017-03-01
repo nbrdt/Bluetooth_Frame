@@ -315,13 +315,24 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription) {
         refreshData();
-        List<BluetoothDataSet> temp = new LinkedList<>();
+        LinkedList<BluetoothDataSet> temp = new LinkedList<>();
         Date current = Calendar.getInstance().getTime();
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
+        for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
+            BluetoothDataSet data = m_bluetoothData.get(i);
+            if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
+                temp.addFirst(data);
+            } else {
+                break;  //just to increase Performance
+            }
+        }
+        prepareLists(temp.size());
         for (BluetoothDataSet data :
-                m_bluetoothData) {
-
+                temp) {
+            m_temperatureValues.add(data.getTemperature().intValue());
+            m_humidityValues.add(data.getHumidity().intValue());
+            m_soilValues.add(data.getSoilMoisture().intValue());
         }
         switch (fragmentDescription.getName()) {
             case (FRAGMENT_TAG_TEMPERATURE): {
@@ -358,5 +369,20 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             copy.add(i);
         }
         return copy;
+    }
+
+    private void prepareLists(int size) {
+        if (m_temperatureValues != null) {
+            m_temperatureValues.clear();
+        }
+        if (m_humidityValues != null) {
+            m_humidityValues.clear();
+        }
+        if (m_soilValues != null) {
+            m_soilValues.clear();
+        }
+        m_temperatureValues = new ArrayList<>(size);
+        m_humidityValues = new ArrayList<>(size);
+        m_soilValues = new ArrayList<>(size);
     }
 }
