@@ -328,7 +328,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             }
         }
         prepareLists(temp.size());
-        for (BluetoothDataSet data :
+        for (BluetoothDataSet data :  //adding everything to the Lists
                 temp) {
             m_temperatureValues.add(data.getTemperature().intValue());
             m_humidityValues.add(data.getHumidity().intValue());
