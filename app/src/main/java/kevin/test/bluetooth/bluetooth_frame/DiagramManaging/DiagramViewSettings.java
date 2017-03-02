@@ -81,7 +81,7 @@ public class DiagramViewSettings implements Parcelable {
         pm_cursorColor = args.getInt(CURSOR_COLOR);
         pm_cursorStrokeSize = args.getInt(CURSOR_STROKESIZE);
         pm_cursorTextSize = args.getInt(CURSOR_TEXTSIZE);
-        pm_frameColor = args.getInt(FRAME_TEXTSIZE);
+        pm_frameColor = args.getInt(FRAME_COLOR);
         pm_frameStrokeSize = args.getInt(FRAME_STROKESIZE);
         pm_frameTextSize = args.getInt(FRAME_TEXTSIZE);
         pm_graphColor = args.getInt(GRAPH_COLOR);
