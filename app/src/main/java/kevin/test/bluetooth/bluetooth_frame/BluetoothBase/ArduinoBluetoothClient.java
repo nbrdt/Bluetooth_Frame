@@ -26,6 +26,28 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
    * Warning: it is not checked, whether or not the Data has been outputed or not, you might therefore lose Data, if you don't call the receive Data Method before.
    *
    * Because of heavy workload required by the getReceivedData Method,m it is recommended to Read and clear the Data in regular intervals.
-  **/    
-    public void clearReceivedData() ;
+  **/
+  public void clearReceivedData();
+
+  /**
+   * Sets the Receive Listener, to be notified on Receive Events.
+   */
+  public void setM_receiveListener(ArduinoBluetoothClient.OnReceiveListener listener);
+
+  /**
+   * This interface is called when decoding Arduino Messages.
+   */
+  public interface OnReceiveListener {
+    /**
+     * called when Messages were read, but not yet decoded.
+     */
+    public void onPreReceive();
+
+    /**
+     * called when Messages were read, decoded and new ReceivedData was added.
+     */
+    public void onPostReceive();
+  }
+
+  ;
 }

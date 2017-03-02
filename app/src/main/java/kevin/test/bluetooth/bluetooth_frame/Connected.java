@@ -40,11 +40,10 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private static final String FRAGMENT_TAG_SOILMOISTURE = "Soil Moisture";
 
     private ArduinoBluetoothClient client;
-    private Button refreshButton;
     private DiagramSettings m_globalSettings;
     private DiagramManager m_diagramManager;
     private BluetoothDataProvider m_dataProvider;
-    private ActionBar m_actionBar;
+    private byte readyToShow = -1;
 
     private List<DiagramSettings> m_diagrams;
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
@@ -81,7 +80,19 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             if (client != null) {
                 try {
                     client.connectBT(addresse, 1);
+                    client.setM_receiveListener(new ArduinoBluetoothClient.OnReceiveListener() {
+                        @Override
+                        public void onPreReceive() {
 
+                        }
+
+                        @Override
+                        public void onPostReceive() {
+                            if (readyToShow == 1) {
+                                m_diagramManager.update();
+                            }
+                        }
+                    });
                     final LinearLayout l = (LinearLayout) findViewById(R.id.activity_connected);
                     l.setBackgroundColor(Color.LTGRAY);
                     final Connected host = this;
@@ -125,11 +136,11 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                             m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
                             m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
                             Log.i(LOG_TAG, "Diagram Manager has been created");
+                            readyToShow = 1;
                         }
                     });
                     Toolbar usedToolbar = (Toolbar) findViewById(R.id.connected_toolbar);
                     setSupportActionBar(usedToolbar);
-                    m_actionBar = getSupportActionBar();
 
                 } catch (BluetoothConnectionStateException e) {
                     Log.e(LOG_TAG, "connection Error", e);
@@ -199,7 +210,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStart() {
         super.onStart();
-
+        if (readyToShow == 0) {
+            readyToShow = 1;
+        }
         try {
             m_bluetoothData = m_dataProvider.readData();
         } catch (UnrecognizableBluetoothDataException e) {
@@ -275,6 +288,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStop() {
         super.onStop();
+        if (readyToShow == 1) {
+            readyToShow = 0;
+        }
         m_dataProvider.writeData(m_bluetoothData);
         m_bluetoothData.clear();
 

@@ -4,6 +4,9 @@ import android.app.Fragment;
 import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -18,6 +21,7 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.logging.LogRecord;
 
 import kevin.test.bluetooth.bluetooth_frame.R;
 
@@ -240,8 +244,14 @@ public class DiagramFragment extends Fragment {
     }
 
     public void updateDiagram() {
-        this.m_rootView.removeView(m_diagram);
-        drawDiagram();
+        Handler refresher = new android.os.Handler(Looper.getMainLooper());
+        refresher.post(new Runnable() {
+            @Override
+            public void run() {
+                m_rootView.removeView(m_diagram);
+                drawDiagram();
+            }
+        });
     }
 
     private void removeFromExtraContainer() {
