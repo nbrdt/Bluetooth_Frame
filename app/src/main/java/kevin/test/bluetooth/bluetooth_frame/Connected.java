@@ -1,5 +1,6 @@
 package kevin.test.bluetooth.bluetooth_frame;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -47,7 +48,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
     private List<DiagramSettings> m_diagrams;
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
-    private List<BluetoothDataSet> m_dataReceived = new LinkedList<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
     private ArrayList<Integer> m_humidityValues = new ArrayList<>();
     private ArrayList<Integer> m_soilValues = new ArrayList<>();
@@ -160,17 +160,36 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
 
     public void changeButtonClicked() {
-        if (m_diagramManager.getShown() != null) {
-            if (m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_TEMPERATURE)) {
-                m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
-            } else if (m_diagramManager.getShown().getName().equalsIgnoreCase(FRAGMENT_TAG_HUMIDITY)) {
-                m_diagramManager.showDiagram(FRAGMENT_TAG_SOILMOISTURE);
-            } else {
-                m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
-            }
-        } else {
-            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+        final String[] items = new String[m_diagrams.size()];
+        int pos = 0;
+        for (DiagramSettings settings :
+                m_diagrams) {
+            items[pos++] = settings.getName();
         }
+        ListDialogFragment listDialog = ListDialogFragment.getInstance(items, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                if (items[which] != null) {
+                    switch (items[which]) {
+                        case (FRAGMENT_TAG_SOILMOISTURE): {
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_SOILMOISTURE);
+                            break;
+                        }
+                        case (FRAGMENT_TAG_HUMIDITY): {
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+                            break;
+                        }
+                        default: {
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+                            break;
+                        }
+                    }
+                } else {
+                    m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+                }
+            }
+        }, "Choose Diagram to be shown");
+        listDialog.show(getSupportFragmentManager(), "List Dialog");
     }
 
     public void disconnectButtonClicked() {
@@ -257,7 +276,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     public void onStop() {
         super.onStop();
         m_dataProvider.writeData(m_bluetoothData);
-        m_dataReceived.clear(); //just to give some space back to the System in case, the user leaves but reenters, so that the user can have some more space
         m_bluetoothData.clear();
 
     }
