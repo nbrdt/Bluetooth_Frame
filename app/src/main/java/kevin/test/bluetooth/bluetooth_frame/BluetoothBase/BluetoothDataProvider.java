@@ -108,19 +108,19 @@ public class BluetoothDataProvider {
             for (BluetoothDataSet data :
                     toWrite) {
                 m_FileWriter.println(INDICATOR_SETSEPARATOR);
-                writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
-                writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
-                writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
-                writeValue(m_FileWriter, INDICATOR_SOIL, data.getSoilMoisture());
+                writeDate(INDICATOR_TIME, data.getTimeStamp());
+                writeValue(INDICATOR_TEMP, data.getTemperature());
+                writeValue(INDICATOR_HUMID, data.getHumidity());
+                writeValue(INDICATOR_SOIL, data.getSoilMoisture());
             }
-        } catch (ConcurrentModificationException e) { //some Devices (Only one so far get This Exception because of the List iterator)
+        } catch (ConcurrentModificationException e) { //some Devices (Only one so far) get This Exception because of the List iterator)
             for (int i = 0; i < toWrite.size(); i++) {
                 BluetoothDataSet data = toWrite.get(i);
                 m_FileWriter.println(INDICATOR_SETSEPARATOR);
-                writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
-                writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
-                writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
-                writeValue(m_FileWriter, INDICATOR_SOIL, data.getSoilMoisture());
+                writeDate(INDICATOR_TIME, data.getTimeStamp());
+                writeValue(INDICATOR_TEMP, data.getTemperature());
+                writeValue(INDICATOR_HUMID, data.getHumidity());
+                writeValue(INDICATOR_SOIL, data.getSoilMoisture());
             }
         }
         if (!leaveOutputStreamOpen) {
@@ -191,18 +191,18 @@ public class BluetoothDataProvider {
         }
     }
 
-    private void writeValue(PrintWriter writer, String indicator, BigDecimal toWrite) {
-        writer.print(indicator);
+    private void writeValue(String indicator, BigDecimal toWrite) {
+        m_FileWriter.print(indicator);
         String numberToWrite = toWrite.toString();
         Log.v(LOG_TAG, "Writing Number:" + numberToWrite);
-        writer.println(numberToWrite);
+        m_FileWriter.println(numberToWrite);
     }
 
-    private void writeDate(PrintWriter writer, String indicator, Date toWrite) {
-        writer.print(indicator);
+    private void writeDate(String indicator, Date toWrite) {
+        m_FileWriter.print(indicator);
         String date = m_formatter.format(toWrite);
         Log.v(LOG_TAG, "Writing Date:" + toWrite);
-        writer.println(date);
+        m_FileWriter.println(date);
     }
 
     private void checkAndRecreate(boolean leaveReadStreamOpen, boolean leaveWriteStreamOpen) throws UnrecognizableBluetoothDataException {
