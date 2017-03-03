@@ -406,15 +406,9 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
 
 
             //Is nescssary to get the height and width of the layout
-            layout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            layout.post(new Runnable() {
                 @Override
-                public void onGlobalLayout() {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                        layout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-                    }
-                    else {
-                        layout.getViewTreeObserver().removeGlobalOnLayoutListener(this);
-                    }
+                public void run() {
 
                     final float touchWidth = layout.getWidth();
                     final int layoutWidth = (int)touchWidth;
@@ -425,9 +419,6 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
 
                     shownDiagram = null;
-                    if(1==1) {
-
-                    }
 
                     switch (getArguments().getInt(ARG_SECTION_NUMBER)-1) {
                         case 0:
@@ -452,9 +443,6 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
                     shownDiagram.setBackgroundColor(Color.WHITE);
                     shownDiagram.setLayoutParams(params);
                     layout.addView(shownDiagram);
-
-
-
                 }
             });
             return rootView;
