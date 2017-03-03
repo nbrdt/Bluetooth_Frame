@@ -54,9 +54,10 @@ public class DiagrammAllgemein extends View {
         maxWert = max;
 
         yMeasurement = height/(maxWert-minWert);
-        if (werte.size() > 0)
+        if (werte.size() > 0 && werte != null)
             xMeasurement = width / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
         else xMeasurement = 1;
+        werte = new ArrayList<Integer>(10);
     }
 
     public DiagrammAllgemein(Context con, int hei, int wid, ArrayList<Integer> messwerte, int min, int max, String einh, DiagramViewSettings viewSettings) {
@@ -71,18 +72,23 @@ public class DiagrammAllgemein extends View {
 
         this.viewSettings = viewSettings;
         yMeasurement = height/(maxWert-minWert);
-        if (werte.size() > 0)
-            xMeasurement = width / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
-        else xMeasurement = 1;
+        if(werte != null) {
+            if (werte.size() > 0)
+                xMeasurement = width / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
+        }
+        else {
+            xMeasurement = 1;
+            werte = new ArrayList<Integer>(10);
+        }
     }
 
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        paint.setColor(Color.BLACK);
-        paint.setStrokeWidth(2);
-        paint.setStyle(Paint.Style.STROKE);
-        paint.setTextSize(25);
+        paint.setColor(viewSettings.getFrameColor());
+        paint.setStrokeWidth(viewSettings.getFrameStrokeSize());
+        paint.setStyle(viewSettings.getFrameStyle());
+        paint.setTextSize(viewSettings.getFrameTextSize());
 
         int zero;
 
@@ -109,17 +115,17 @@ public class DiagrammAllgemein extends View {
         canvas.drawText(minWert+einheit, paint.getTextSize()/2, center+((maxWert-((maxWert+minWert)/2))*yMeasurement)-paint.getTextSize(), paint);
 
 
-        paint.setColor(Color.RED);
-        paint.setStrokeWidth(5);
-        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(viewSettings.getGraphColor());
+        paint.setStrokeWidth(viewSettings.getGraphStrokeSize());
+        paint.setStyle(viewSettings.getGraphStyle());
         for(int i = 0; i < werte.size()-1; i++) {
             canvas.drawLine(i*xMeasurement, toYPosition(werte.get(i)), (i+1)*xMeasurement, toYPosition(werte.get(i+1)), paint);
             canvas.drawCircle(i*xMeasurement, toYPosition(werte.get(i)), paint.getStrokeWidth()*1.5f, paint);
         }
 
-        paint.setColor(Color.BLUE);
-        paint.setStrokeWidth(3);
-        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(viewSettings.getCursorColor());
+        paint.setStrokeWidth(viewSettings.getCursorStrokeSize());
+        paint.setStyle(viewSettings.getCursorStyle());
         canvas.drawLine(xClickPosition, 0, xClickPosition, height, paint);
     }
 
