@@ -363,24 +363,26 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
 
                     }
 
+                    DiagramViewSettings vs = DiagramViewSettings.getDefaultSettings();
                     switch (getArguments().getInt(ARG_SECTION_NUMBER)-1) {
                         case 0:
                             //settings = new DiagramSettings("Temperature", "°C", width, height, -25, 100);
                             //viewSettings = DiagramViewSettings.getDefaultSettings();
                             //settings.setViewSettings(viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), -25, 100, "°C");
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, values, -25, 100, "°C", vs);
                             break;
                         case 1:
                             //settings = new DiagramSettings("Humidity", "%", width, height, 0, 100);
                             //viewSettings = DiagramViewSettings.getDefaultSettings();
                             //settings.setViewSettings(viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
+
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, values, 0, 100, "%", vs);
                             break;
                         case 2:
                             //settings = new DiagramSettings("Soil Moisture", "%", width, height, 0, 100);
                             //viewSettings = DiagramViewSettings.getDefaultSettings();
                             //settings.setViewSettings(viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, values, 0, 100, "%", vs);
                             break;
                     }
                     shownDiagram.setBackgroundColor(Color.WHITE);
