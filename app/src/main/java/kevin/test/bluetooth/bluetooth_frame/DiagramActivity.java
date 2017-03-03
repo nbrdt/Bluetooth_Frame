@@ -44,7 +44,7 @@ import kevin.test.bluetooth.bluetooth_frame.Views.*;
 
 //author: NB, KI
 
-public class DiagramActivity extends AppCompatActivity implements DiagramManager.DataProvider {
+public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener {
 
 
     private static final String LOG_TAG = "Diagram Activity";
@@ -242,50 +242,14 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
     }
 
     @Override
-    public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription) {
-        return null;
+    public void onPreReceive() {
+
     }
 
-    /*
     @Override
-    public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription) {
-        refreshData();
-        LinkedList<BluetoothDataSet> temp = new LinkedList<>();
-        Date current = Calendar.getInstance().getTime();
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
-        if (maxBack > 0) {
-            for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
-                BluetoothDataSet data = m_bluetoothData.get(i);
-                if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
-                    temp.addFirst(data);
-                } else {
-                    break;  //just to increase Performance
-                }
-            }
-        } else {
-            temp = (LinkedList<BluetoothDataSet>) m_bluetoothData;
-        }
-        prepareLists(temp.size());
-        for (BluetoothDataSet data :  //adding everything to the Lists
-                temp) {
-            m_temperatureValues.add(data.getTemperature().intValue());
-            m_humidityValues.add(data.getHumidity().intValue());
-            m_soilValues.add(data.getSoilMoisture().intValue());
-        }
-        switch (fragmentDescription.getName()) {
-            case (FRAGMENT_TAG_TEMPERATURE): {
-                return copyValues(m_temperatureValues);
-            }
-            case (FRAGMENT_TAG_HUMIDITY): {
-                return copyValues(m_humidityValues);
-            }
-            case (FRAGMENT_TAG_SOILMOISTURE): {
-                return copyValues(m_soilValues);
-            }
-        }
-        return null;
-    }*/
+    public void onPostReceive() {
+
+    }
 
     private void reloadSettings() {
         loadConnectionSettings();
@@ -452,12 +416,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
 
 
         public void updateDiagram(ArrayList<Integer> newValues) {
-            if(values.size() > 10) {
-                for(int i = 0; i < newValues.size(); i++) {
-                    values.remove(i);
-                    values.add(newValues.get(i));
-                }
-            }
+            values = newValues;
             shownDiagram.invalidate();
         }
     }
