@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
  * Temperature:49.8571428571
  * Humidity:50.5000000000
  * Soil Moisture:37.5714285714
+ *
  * @author KI
  * @version 1.1a
  **/
@@ -102,13 +104,24 @@ public class BluetoothDataProvider {
             }
         }
         m_FileWriter.println("");
-        for (BluetoothDataSet data :
-                toWrite) {
-            m_FileWriter.println(INDICATOR_SETSEPARATOR);
-            writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
-            writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
-            writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
-            writeValue(m_FileWriter, INDICATOR_SOIL, data.getSoilMoisture());
+        try {
+            for (BluetoothDataSet data :
+                    toWrite) {
+                m_FileWriter.println(INDICATOR_SETSEPARATOR);
+                writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
+                writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
+                writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
+                writeValue(m_FileWriter, INDICATOR_SOIL, data.getSoilMoisture());
+            }
+        } catch (ConcurrentModificationException e) { //some Devices (Only one so far get This Exception because of the List iterator)
+            for (int i = 0; i < toWrite.size(); i++) {
+                BluetoothDataSet data = toWrite.get(i);
+                m_FileWriter.println(INDICATOR_SETSEPARATOR);
+                writeDate(m_FileWriter, INDICATOR_TIME, data.getTimeStamp());
+                writeValue(m_FileWriter, INDICATOR_TEMP, data.getTemperature());
+                writeValue(m_FileWriter, INDICATOR_HUMID, data.getHumidity());
+                writeValue(m_FileWriter, INDICATOR_SOIL, data.getSoilMoisture());
+            }
         }
         if (!leaveOutputStreamOpen) {
             m_FileWriter.close();
