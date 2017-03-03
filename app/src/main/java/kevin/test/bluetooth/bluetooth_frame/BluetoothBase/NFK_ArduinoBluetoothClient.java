@@ -3,7 +3,6 @@ package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.Calendar;
@@ -24,12 +23,12 @@ import static java.lang.Character.isDigit;
 public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implements ArduinoBluetoothClient{
     private List<BluetoothDataSet> m_receivedData;
     private BufferedReader m_Reader;
-    private BufferedWriter m_Writer;
     private Timer m_MessageTimer;
     private long m_ScheduleRate;
     private long m_TimerOffset;
     private volatile double m_falseProtocolSinceClear;
     private volatile double m_readSinceClear;
+    private OnReceiveListener m_receiveListener;
     private static final String LOG_TAG = "ArduinoBluetoothClient";
 
     private NFK_ArduinoBluetoothClient(long scheduleRate, long timerOffset) {
@@ -37,7 +36,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         setListener(new ArduinoConnectionListener());
         m_receivedData = new LinkedList<BluetoothDataSet>();
         m_Reader = null;
-        m_Writer = null;
         m_ScheduleRate = scheduleRate;
         m_TimerOffset = timerOffset;
         m_falseProtocolSinceClear = 0;
@@ -92,12 +90,15 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         }
     }
 
+    public void setM_receiveListener(OnReceiveListener listener) {
+        m_receiveListener = listener;
+    }
+
     @Override
     public void connectBT(String AddressAndName, int tries) throws BluetoothConnectionStateException {
         super.connectBT(AddressAndName, tries);
         Log.v(LOG_TAG,"creating ByteStream Converter");
         m_Reader = m_ConnectionHandler.getInputStream(); //@throws BluetoothConnectionState
-        m_Writer = m_ConnectionHandler.getOutputStream(); //@throws BluetoothConnectionState
         Log.i(LOG_TAG,"ready to read InputStreams");
         resetTimer();
         m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
@@ -120,7 +121,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         cancelTimer();
         m_MessageTimer = null;
         m_Reader = null;
-        m_Writer = null;
         return super.destroy();
     }
 
@@ -142,6 +142,18 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     @Override
     public int read(char[] buffer) throws BluetoothConnectionStateException {
         throw new UnsupportedOperationException("you may not interfere with internal reading");
+    }
+
+    @Override
+    public void setTimer(long scheduleRate) {
+        m_ScheduleRate = scheduleRate;
+        resetTimer();
+        m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
+    }
+
+    @Override
+    public long getTimerRate() {
+        return m_ScheduleRate;
     }
 
     private List<BluetoothDataSet> copyData(List<BluetoothDataSet> toCopy) {
@@ -174,7 +186,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         public void onConnectionTermination() {
             resetTimer();
             m_Reader = null;
-            m_Writer = null;
             super.onConnectionTermination();
         }
 
@@ -182,7 +193,6 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         public void onConnectionLoss() {
             resetTimer();
             m_Reader = null;
-            m_Writer = null;
             super.onConnectionLoss();
         }
     }
@@ -208,6 +218,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             try {
                 int received = m_Reader.read(bufferedInput);  //reading input from the Bluetooth-Queue into the Buffer
                 if(received>0) {
+                    if (m_receiveListener != null) m_receiveListener.onPreReceive();
                     recognizeArduinoSend(bufferedInput,received);
                     if (pm_Temps.size() >0 &&
                         pm_Humids.size()>0 &&
@@ -219,6 +230,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, humidity, soilMoisture);
                         m_receivedData.add(toAdd);
                         clearLists();
+                        if (m_receiveListener != null) m_receiveListener.onPostReceive();
                     }
                 }
             } catch (IOException e) {

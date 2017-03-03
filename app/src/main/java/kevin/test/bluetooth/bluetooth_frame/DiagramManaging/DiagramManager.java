@@ -97,6 +97,15 @@ public class DiagramManager {
         throw new IllegalArgumentException("could not resolve Diagram settings");
     }
 
+    public void update() {
+        if (m_current != null) {
+            m_current.updateDiagram(m_refresher.onRefreshRequest(m_current.getSettings()));
+        }
+    }
+
+    public void setDiagrams(List<DiagramSettings> diagrams) {
+        m_diagrams = diagrams;
+    }
 
     public interface DataProvider {
         public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription);

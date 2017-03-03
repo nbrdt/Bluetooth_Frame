@@ -6,14 +6,12 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -33,7 +31,6 @@ import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 
-
 public class Connected extends AppCompatActivity implements DiagramManager.DataProvider {
     private static final String LOG_TAG = "Connected Activity";
     private static final String FRAGMENT_TAG_TEMPERATURE = "Temperature";
@@ -44,6 +41,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private DiagramSettings m_globalSettings;
     private DiagramManager m_diagramManager;
     private BluetoothDataProvider m_dataProvider;
+    private byte readyToShow = -1;
 
     private List<DiagramSettings> m_diagrams;
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
@@ -59,10 +57,13 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         m_dataProvider = new BluetoothDataProvider(getApplicationContext());
         String addresse = getIntent().getExtras().getString("addresse");
 
+        Toast.makeText(getApplicationContext(), addresse, Toast.LENGTH_SHORT).show();
+
+
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
             try {
-                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
+                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE)));
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
                 try {
@@ -77,7 +78,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
             if (client != null) {
                 try {
                     client.connectBT(addresse, 1);
-
                     final LinearLayout l = (LinearLayout) findViewById(R.id.activity_connected);
                     l.setBackgroundColor(Color.LTGRAY);
                     final Connected host = this;
@@ -90,9 +90,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                     " width:" + width +
                                     " height: " + height);
                             DiagramViewSettings viewSettings = DiagramViewSettings.getDefaultSettings();
-
-                            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);  // ab hier können die Farb einstellungen eingebaut werden
-                            viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "-65536")));
                             m_globalSettings = new DiagramSettings(viewSettings, null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
                             m_diagrams = new ArrayList<>(3);
                             m_diagrams.add(new DiagramSettings(
@@ -120,10 +117,27 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                     0,
                                     100));
                             m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
-                            m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
+                            loadViewSettings();
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
                             Log.i(LOG_TAG, "Diagram Manager has been created");
+                            readyToShow = 1;
+                            client.setM_receiveListener(new ArduinoBluetoothClient.OnReceiveListener() {
+                                @Override
+                                public void onPreReceive() {
+
+                                }
+
+                                @Override
+                                public void onPostReceive() {
+                                    if (readyToShow == 1) {
+                                        m_diagramManager.update();
+                                    }
+                                }
+                            });
                         }
                     });
+                    Toolbar usedToolbar = (Toolbar) findViewById(R.id.connected_toolbar);
+                    setSupportActionBar(usedToolbar);
 
                 } catch (BluetoothConnectionStateException e) {
                     Log.e(LOG_TAG, "connection Error", e);
@@ -193,7 +207,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStart() {
         super.onStart();
-
+        if (readyToShow == 0) {
+            readyToShow = 1;
+        }
         try {
             m_bluetoothData = m_dataProvider.readData();
         } catch (UnrecognizableBluetoothDataException e) {
@@ -249,7 +265,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         switch (item.getItemId()) {
             case (R.id.main_actionbar_menu_item_settings): {
                 Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivity(startSettings);
+                startActivityForResult(startSettings, SettingsActivity.REQUESTCODE);
                 return true;
             }
             case (R.id.connected_actionbar_menu_item_changeDiagram): {
@@ -269,44 +285,75 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     @Override
     public void onStop() {
         super.onStop();
+        if (readyToShow == 1) {
+            readyToShow = 0;
+        }
         m_dataProvider.writeData(m_bluetoothData);
         m_bluetoothData.clear();
 
     }
 
-    /**
-     * Perform any final cleanup before an activity is destroyed.  This can
-     * happen either because the activity is finishing (someone called
-     * {@link #finish} on it, or because the system is temporarily destroying
-     * this instance of the activity to save space.  You can distinguish
-     * between these two scenarios with the {@link #isFinishing} method.
-     * <p>
-     * <p><em>Note: do not count on this method being called as a place for
-     * saving data! For example, if an activity is editing data in a content
-     * provider, those edits should be committed in either {@link #onPause} or
-     * {@link #onSaveInstanceState}, not here.</em> This method is usually implemented to
-     * free resources like threads that are associated with an activity, so
-     * that a destroyed activity does not leave such things around while the
-     * rest of its application is still running.  There are situations where
-     * the system will simply kill the activity's hosting process without
-     * calling this method (or any others) in it, so it should not be used to
-     * do things that are intended to remain around after the process goes
-     * away.
-     * <p>
-     * <p><em>Derived classes must call through to the super class's
-     * implementation of this method.  If they do not, an exception will be
-     * thrown.</em></p>
-     *
-     * @see #onPause
-     * @see #onStop
-     * @see #finish
-     * @see #isFinishing
-     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SettingsActivity.REQUESTCODE) {
+
+        }
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         if (client != null) {
             client.destroy();
+        }
+    }
+
+    private void reloadSettings() {
+        loadConnectionSettings();
+        loadViewSettings();
+    }
+
+    private void loadConnectionSettings() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if (client != null) {
+            long timerRate;
+            try {
+                timerRate = Long.parseLong(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE));
+                if (client.getTimerRate() != timerRate) {
+                    client.setTimer(timerRate);
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
+                try {
+                    synchronized (this) {
+                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
+                    }
+                } catch (InterruptedException e1) {
+                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
+                }
+                finish();
+            }
+        }
+    }
+
+    private void loadViewSettings() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        DiagramViewSettings viewSettings = m_globalSettings.getViewSettings();
+        int graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
+        boolean changed = false;
+        if (graphColor != viewSettings.getGraphColor()) {
+            viewSettings.setGraphColor(graphColor);
+            changed = true;
+        }
+        if (changed) {
+            m_globalSettings.setViewSettings(viewSettings);
+            for (DiagramSettings settings :
+                    m_diagrams) {
+                settings.setViewSettings(viewSettings);
+            }
+            m_diagramManager.setDiagrams(m_diagrams);
+            m_diagramManager.update();
         }
     }
 
