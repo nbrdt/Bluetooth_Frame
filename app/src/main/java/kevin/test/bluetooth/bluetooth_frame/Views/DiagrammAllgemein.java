@@ -52,7 +52,7 @@ public class DiagrammAllgemein extends View {
         werte = messwerte;
         minWert = min;
         maxWert = max;
-
+        this.viewSettings = DiagramViewSettings.getDefaultSettings().getDefaultSettings();
         yMeasurement = height/(maxWert-minWert);
         if (werte.size() > 0 && werte != null)
             xMeasurement = width / werte.size();  // TODO passende Lösung anstatt dieser Notlösung

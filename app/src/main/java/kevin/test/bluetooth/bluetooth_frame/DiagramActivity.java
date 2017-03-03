@@ -59,7 +59,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private BluetoothDataProvider m_dataProvider;
     private ArduinoBluetoothClient m_client;
-    private DiagramViewSettings m_viewSettings;
+    DiagramViewSettings m_viewSettings;
 
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
@@ -285,7 +285,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             m_viewSettings = DiagramViewSettings.getDefaultSettings();
         }
         int graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
-        boolean changed = false;
         if (graphColor != m_viewSettings.getGraphColor()) {
             m_viewSettings.setGraphColor(graphColor);
         }
@@ -339,12 +338,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
      */
     public static class DiagramFragment extends Fragment {
 
+        private DiagramViewSettings viewSettings;
         private DiagrammAllgemein shownDiagram;
         LinearLayout layout;
 
         private ArrayList<Integer> values;
 
         private static final String ARG_SECTION_NUMBER = "section_number";
+        private static final String ARG_VIEWSETTINGS = "section_number";
 
         public DiagramFragment() {
         }
@@ -353,13 +354,15 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
          * Returns a new instance of this fragment for the given section
          * number.
          */
-        public static DiagramFragment newInstance(int sectionNumber) {
+        public static DiagramFragment newInstance(int sectionNumber, DiagramViewSettings viewSettings) {
             DiagramFragment fragment = new DiagramFragment();
             Bundle args = new Bundle();
             args.putInt(ARG_SECTION_NUMBER, sectionNumber);
+            args.putBundle(ARG_VIEWSETTINGS, viewSettings.createToBundle());
             fragment.setArguments(args);
             return fragment;
         }
+
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -367,7 +370,9 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
             final View rootView = inflater.inflate(R.layout.tab_layout, container, false);
             layout = (LinearLayout)rootView.findViewById(R.id.layout);
-
+            if (getArguments() != null) {
+                viewSettings = DiagramViewSettings.createFromBundle(getArguments().getBundle(ARG_VIEWSETTINGS));
+            }
 
             //Is nescssary to get the height and width of the layout
             layout.post(new Runnable() {
@@ -386,22 +391,13 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
                     switch (getArguments().getInt(ARG_SECTION_NUMBER)-1) {
                         case 0:
-                            //settings = new DiagramSettings("Temperature", "°C", width, height, -25, 100);
-                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(m_viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), -25, 100, "°C");
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), -25, 100, "°C", viewSettings);
                             break;
                         case 1:
-                            //settings = new DiagramSettings("Humidity", "%", width, height, 0, 100);
-                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(m_viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%", viewSettings);
                             break;
                         case 2:
-                            //settings = new DiagramSettings("Soil Moisture", "%", width, height, 0, 100);
-                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(m_viewSettings);
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%", viewSettings);
                             break;
                     }
                     shownDiagram.setBackgroundColor(Color.WHITE);
@@ -433,7 +429,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
         @Override
         public Fragment getItem(int position) {
-            return DiagramFragment.newInstance(position + 1);
+            return DiagramFragment.newInstance(position + 1, m_viewSettings);
         }
 
         //Amount of tabs
