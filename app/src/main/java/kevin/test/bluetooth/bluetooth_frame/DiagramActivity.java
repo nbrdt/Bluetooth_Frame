@@ -400,11 +400,15 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                             shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%", viewSettings);
                             break;
                     }
+
+                    shownDiagram.setDiagramFragment(DiagramFragment.this);
                     shownDiagram.setBackgroundColor(Color.WHITE);
                     shownDiagram.setLayoutParams(params);
                     layout.addView(shownDiagram);
                 }
             });
+
+
             return rootView;
 
 

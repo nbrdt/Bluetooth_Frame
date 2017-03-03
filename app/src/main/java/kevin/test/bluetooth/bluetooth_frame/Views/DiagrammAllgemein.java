@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 
+import kevin.test.bluetooth.bluetooth_frame.DiagramActivity;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 
 /**
@@ -39,6 +40,8 @@ public class DiagrammAllgemein extends View {
     private Paint paint = new Paint();
 
     private DiagramViewSettings viewSettings;
+
+    private DiagramActivity.DiagramFragment fragment; 
 
 
 
@@ -172,6 +175,10 @@ public class DiagrammAllgemein extends View {
     public void updateList(ArrayList<Integer> newValues) {
         werte = newValues;
         invalidate();
+    }
+
+    public void setDiagramFragment(DiagramActivity.DiagramFragment frag) {
+        this.fragment = frag;
     }
 
 
