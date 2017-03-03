@@ -235,6 +235,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         }
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == SettingsActivity.REQUESTCODE) {
+            reloadSettings();
+        }
+    }
+
     //Called when the back-button on the phone is pressed
     @Override
     public void onBackPressed() {
@@ -370,12 +378,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     private void loadViewSettings() {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        DiagramActivity.DiagramFragment fragment = (DiagramActivity.DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
         if (m_viewSettings == null) {
             m_viewSettings = DiagramViewSettings.getDefaultSettings();
         }
         int graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
         if (graphColor != m_viewSettings.getGraphColor()) {
             m_viewSettings.setGraphColor(graphColor);
+            if (fragment != null) fragment.setViewSettings(m_viewSettings);
         }
     }
 
