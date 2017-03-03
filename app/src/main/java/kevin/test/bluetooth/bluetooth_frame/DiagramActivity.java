@@ -388,17 +388,25 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
 
                     shownDiagram = null;
+                    Bundle args = getArguments();
+                    int diagramToShow = args.getInt(ARG_SECTION_NUMBER);
 
-                    switch (getArguments().getInt(ARG_SECTION_NUMBER)-1) {
-                        case 0:
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), -25, 100, "°C", viewSettings);
+                    switch (diagramToShow) {
+                        case 0: {
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
                             break;
-                        case 1:
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%", viewSettings);
+                        }
+                        case 1: {
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 0, 100, "%", viewSettings);
                             break;
-                        case 2:
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%", viewSettings);
+                        }
+                        case 2: {
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 0, 100, "%", viewSettings);
                             break;
+                        }
+                        default: {
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
+                        }
                     }
 
                     shownDiagram.setDiagramFragment(DiagramFragment.this);
