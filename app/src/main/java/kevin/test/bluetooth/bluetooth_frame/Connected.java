@@ -129,7 +129,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
 
                                 @Override
                                 public void onPostReceive() {
-                                    if (readyToShow == 1) {
+                                    if (readyToShow == 2) {
                                         m_diagramManager.update();
                                     }
                                 }
