@@ -1,0 +1,20 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="kevin.test.bluetooth.bluetooth_frame.DiagramActivity">
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="100"
+        android:title="@string/action_settings"
+        app:showAsAction="never" />
+    <item
+        android:title="Refresh"
+        android:orderInCategory="101"
+        android:id="@+id/action_refresh" />
+    <item
+        android:title="Disconnect"
+        android:orderInCategory="102"
+        android:id="@+id/action_disconnect" />
+
+
+</menu>
