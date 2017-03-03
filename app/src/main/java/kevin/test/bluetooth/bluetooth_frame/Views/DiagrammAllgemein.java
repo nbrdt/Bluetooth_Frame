@@ -88,6 +88,15 @@ public class DiagrammAllgemein extends View {
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
+        yMeasurement = height / (maxWert - minWert);
+        if (werte != null) {
+            if (werte.size() > 0)
+                xMeasurement = width / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
+        } else {
+            xMeasurement = 1;
+            werte = new ArrayList<Integer>(10);
+        }
+
         paint.setColor(viewSettings.getFrameColor());
         paint.setStrokeWidth(viewSettings.getFrameStrokeSize());
         paint.setStyle(viewSettings.getFrameStyle());
@@ -174,12 +183,13 @@ public class DiagrammAllgemein extends View {
 
     public void updateList(ArrayList<Integer> newValues) {
         werte = newValues;
-        invalidate();
     }
 
     public void setDiagramFragment(DiagramActivity.DiagramFragment frag) {
         this.fragment = frag;
     }
 
-
+    public void setViewSettings(DiagramViewSettings settings) {
+        this.viewSettings = settings;
+    }
 }

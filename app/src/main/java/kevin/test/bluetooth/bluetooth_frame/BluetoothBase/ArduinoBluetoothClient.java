@@ -44,7 +44,7 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
   /**
    * Sets the Receive Listener, to be notified on Receive Events.
    */
-  public void setM_receiveListener(ArduinoBluetoothClient.OnReceiveListener listener);
+  public void setReceiveListener(ArduinoBluetoothClient.OnReceiveListener listener);
 
   /**
    * This interface is called when decoding Arduino Messages.

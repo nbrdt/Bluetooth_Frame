@@ -121,7 +121,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                             m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
                             Log.i(LOG_TAG, "Diagram Manager has been created");
                             readyToShow = 1;
-                            client.setM_receiveListener(new ArduinoBluetoothClient.OnReceiveListener() {
+                            client.setReceiveListener(new ArduinoBluetoothClient.OnReceiveListener() {
                                 @Override
                                 public void onPreReceive() {
 

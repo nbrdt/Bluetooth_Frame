@@ -3,7 +3,8 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -23,11 +24,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import android.view.ViewTreeObserver;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,15 +39,16 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
-import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
-import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 import kevin.test.bluetooth.bluetooth_frame.Views.*;
 
 //author: NB, KI
 
 public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener {
-
+    private static final String DIAGRAM_NAME_TEMP = "Temperature";
+    private static final String DIAGRAM_NAME_HUMID = "Humidity";
+    private static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
+    ;
 
     private static final String LOG_TAG = "Diagram Activity";
     /**
@@ -87,7 +90,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
 
         // Set up the ViewPager with the sections adapter.
-        mViewPager = (NonSwipableViewPager) findViewById(R.id.container);
+        mViewPager = (NonSwipableViewPager) findViewById(R.id.diagramactivity_diagramcontainer);
         mViewPager.setAdapter(mSectionsPagerAdapter);
         mViewPager.setSwipeable(false);
 
@@ -175,6 +178,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             m_humidityValues.add(data.getHumidity().intValue());
             m_soilValues.add(data.getSoilMoisture().intValue());
         }
+        m_client.setReceiveListener(this);
     }
 
 
@@ -248,7 +252,92 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     @Override
     public void onPostReceive() {
+        DiagramActivity.DiagramFragment fragment = (DiagramActivity.DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
+        updateFragment(fragment);
+    }
 
+    private void updateFragment(DiagramActivity.DiagramFragment fragment) {
+        processData();
+        String title = mSectionsPagerAdapter.getPageTitle(fragment.getSectionNumber() - 1).toString();
+        switch (title) {
+            case (DIAGRAM_NAME_SOIL): {
+                fragment.updateDiagram(m_soilValues);
+                break;
+            }
+            case (DIAGRAM_NAME_HUMID): {
+                fragment.updateDiagram(m_humidityValues);
+                break;
+            }
+            default: {
+                fragment.updateDiagram(m_temperatureValues);
+                break;
+            }
+        }
+    }
+
+    private void processData() {
+        refreshData();
+        LinkedList<BluetoothDataSet> temp = new LinkedList<>();
+        Date current = Calendar.getInstance().getTime();
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
+        if (maxBack > 0) {
+            for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
+                BluetoothDataSet data = m_bluetoothData.get(i);
+                if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
+                    temp.addFirst(data);
+                } else {
+                    break;  //just to increase Performance
+                }
+            }
+        } else {
+            temp = (LinkedList<BluetoothDataSet>) m_bluetoothData;
+        }
+        prepareLists(temp.size());
+        for (BluetoothDataSet data :  //adding everything to the Lists
+                temp) {
+            m_temperatureValues.add(data.getTemperature().intValue());
+            m_humidityValues.add(data.getHumidity().intValue());
+            m_soilValues.add(data.getSoilMoisture().intValue());
+        }
+    }
+
+    private void refreshData() {
+        List<BluetoothDataSet> received = m_client.getReceivedData();
+        if (received != null) {
+            m_client.clearReceivedData();
+            for (BluetoothDataSet data :
+                    received) {
+                m_bluetoothData.add(data);
+                m_temperatureValues.add(data.getTemperature().intValue());
+                m_humidityValues.add(data.getHumidity().intValue());
+                m_soilValues.add(data.getSoilMoisture().intValue());
+            }
+        }
+    }
+
+    private void prepareLists(int size) {
+        if (m_temperatureValues != null) {
+            m_temperatureValues.clear();
+        }
+        if (m_humidityValues != null) {
+            m_humidityValues.clear();
+        }
+        if (m_soilValues != null) {
+            m_soilValues.clear();
+        }
+        m_temperatureValues = new ArrayList<>(size);
+        m_humidityValues = new ArrayList<>(size);
+        m_soilValues = new ArrayList<>(size);
+    }
+
+    private ArrayList<Integer> copyValues(ArrayList<Integer> toCopyFrom) {
+        ArrayList<Integer> copy = new ArrayList<>(toCopyFrom.size());
+        for (Integer i :
+                toCopyFrom) {
+            copy.add(i);
+        }
+        return copy;
     }
 
     private void reloadSettings() {
@@ -290,46 +379,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         }
     }
 
-    private void refreshData() {
-        List<BluetoothDataSet> received = m_client.getReceivedData();
-        if (received != null) {
-            m_client.clearReceivedData();
-            for (BluetoothDataSet data :
-                    received) {
-                m_bluetoothData.add(data);
-                m_temperatureValues.add(data.getTemperature().intValue());
-                m_humidityValues.add(data.getHumidity().intValue());
-                m_soilValues.add(data.getSoilMoisture().intValue());
-            }
-        }
-    }
-
-    private ArrayList<Integer> copyValues(ArrayList<Integer> toCopyFrom) {
-        ArrayList<Integer> copy = new ArrayList<>(toCopyFrom.size());
-        for (Integer i :
-                toCopyFrom) {
-            copy.add(i);
-        }
-        return copy;
-    }
-
-    private void prepareLists(int size) {
-        if (m_temperatureValues != null) {
-            m_temperatureValues.clear();
-        }
-        if (m_humidityValues != null) {
-            m_humidityValues.clear();
-        }
-        if (m_soilValues != null) {
-            m_soilValues.clear();
-        }
-        m_temperatureValues = new ArrayList<>(size);
-        m_humidityValues = new ArrayList<>(size);
-        m_soilValues = new ArrayList<>(size);
-    }
-
-
-
 
 
 
@@ -339,6 +388,8 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     public static class DiagramFragment extends Fragment {
 
         private DiagramViewSettings viewSettings;
+        private int sectionNumber;
+
         private DiagrammAllgemein shownDiagram;
         LinearLayout layout;
 
@@ -356,10 +407,8 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
          */
         public static DiagramFragment newInstance(int sectionNumber, DiagramViewSettings viewSettings) {
             DiagramFragment fragment = new DiagramFragment();
-            Bundle args = new Bundle();
-            args.putInt(ARG_SECTION_NUMBER, sectionNumber);
-            args.putBundle(ARG_VIEWSETTINGS, viewSettings.createToBundle());
-            fragment.setArguments(args);
+            fragment.viewSettings = viewSettings; // Bundles don't work anymore (latest STABLE SDK update), they only save the last given value (every other is registered as null)
+            fragment.sectionNumber = sectionNumber;
             return fragment;
         }
 
@@ -370,11 +419,10 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
             final View rootView = inflater.inflate(R.layout.tab_layout, container, false);
             layout = (LinearLayout)rootView.findViewById(R.id.layout);
-            if (getArguments() != null) {
-                viewSettings = DiagramViewSettings.createFromBundle(getArguments().getBundle(ARG_VIEWSETTINGS));
-            }
+            Bundle args = getArguments();
+            final int diagramToShow = sectionNumber - 1;
 
-            //Is nescssary to get the height and width of the layout
+            //Is necessary to get the height and width of the layout
             layout.post(new Runnable() {
                 @Override
                 public void run() {
@@ -389,7 +437,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
                     shownDiagram = null;
                     Bundle args = getArguments();
-                    int diagramToShow = args.getInt(ARG_SECTION_NUMBER);
 
                     switch (diagramToShow) {
                         case 0: {
@@ -401,7 +448,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                             break;
                         }
                         case 2: {
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 0, 100, "%", viewSettings);
+                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 20, 80, "%", viewSettings);
                             break;
                         }
                         default: {
@@ -425,7 +472,32 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
         public void updateDiagram(ArrayList<Integer> newValues) {
             values = newValues;
-            shownDiagram.invalidate();
+            updateDiagram();
+        }
+
+        public void updateDiagram() {
+            if (shownDiagram != null) {
+                shownDiagram.updateList(values);
+                Handler refresher = new Handler(Looper.getMainLooper());
+                refresher.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        shownDiagram.invalidate();
+                    }
+                });
+            }
+        }
+
+        public void setViewSettings(DiagramViewSettings settings) {
+            this.viewSettings = settings;
+            if (shownDiagram != null) {
+                shownDiagram.setViewSettings(viewSettings);
+                updateDiagram();
+            }
+        }
+
+        public int getSectionNumber() {
+            return sectionNumber;
         }
     }
 
@@ -433,9 +505,10 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to
      * one of the sections/tabs/pages.
      */
-    public class SectionsPagerAdapter extends FragmentPagerAdapter {
+    private class SectionsPagerAdapter extends FragmentPagerAdapter {
+        private static final int PAGE_NUMBER = 3;
 
-        public SectionsPagerAdapter(FragmentManager fm) {
+        SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 
@@ -447,7 +520,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         //Amount of tabs
         @Override
         public int getCount() {
-            return 3;
+            return PAGE_NUMBER;
         }
 
         //Defines the titles of the Tabs
@@ -455,13 +528,17 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         public CharSequence getPageTitle(int position) {
             switch (position) {
                 case 0:
-                    return "Temperature";
+                    return DIAGRAM_NAME_TEMP;
                 case 1:
-                    return "Humidity";
+                    return DIAGRAM_NAME_SOIL;
                 case 2:
-                    return "Soil Moisture";
+                    return DIAGRAM_NAME_HUMID;
             }
             return null;
+        }
+
+        public void resetViewSettings() {
+
         }
     }
 }

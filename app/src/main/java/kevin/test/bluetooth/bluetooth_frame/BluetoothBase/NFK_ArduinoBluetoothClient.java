@@ -90,7 +90,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         }
     }
 
-    public void setM_receiveListener(OnReceiveListener listener) {
+    public void setReceiveListener(OnReceiveListener listener) {
         m_receiveListener = listener;
     }
 
