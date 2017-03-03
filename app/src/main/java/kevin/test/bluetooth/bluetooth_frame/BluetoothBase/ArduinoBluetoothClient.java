@@ -30,6 +30,18 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
   public void clearReceivedData();
 
   /**
+   * Sets The Receiving Timer to the given scheduleRate.
+   */
+  public void setTimer(long scheduleRate);
+
+  /**
+   * returns the current schedule Rate of the Receiving Timer
+   *
+   * @return the current receive Rate as a long
+   */
+  public long getTimerRate();
+
+  /**
    * Sets the Receive Listener, to be notified on Receive Events.
    */
   public void setM_receiveListener(ArduinoBluetoothClient.OnReceiveListener listener);

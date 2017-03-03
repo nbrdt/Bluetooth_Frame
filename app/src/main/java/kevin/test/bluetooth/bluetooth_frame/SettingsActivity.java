@@ -2,31 +2,25 @@ package kevin.test.bluetooth.bluetooth_frame;
 
 
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.media.Ringtone;
-import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.support.annotation.NonNull;
+import android.preference.PreferenceScreen;
 import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.preference.RingtonePreference;
-import android.text.TextUtils;
 import android.util.Log;
 import android.view.MenuItem;
 
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.TreeSet;
 
 /**
@@ -41,10 +35,37 @@ import java.util.TreeSet;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
-    public static final String KEY_VIEW_CURSORCOLOR = "draw_color";
+    public static final int REQUESTCODE = 2;
+    public static final String KEY_VIEW_GRAPHCOLOR = "draw_color";
+    public static final String PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR = "-65536";
     public static final String KEY_DATA_DELETEONFINISH = "delete_on_finish";
     public static final String KEY_DATA_SHOWVALUES = "show_values";
     public static final String KEY_CONNECTION_RECEIVERATE = "receive_data_rate";
+    public static final String PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE = "1000";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setupActionBar();
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public boolean onIsMultiPane() {
+        return isXLargeTablet(this);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    public void onBuildHeaders(List<Header> target) {
+        loadHeadersFromResource(R.xml.pref_headers, target);
+    }
 
     /**
      * A preference value change listener that updates the preference's summary
@@ -116,7 +137,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                     .getBoolean(preference.getKey(), true));
                     break;
                 }
-                case ("integer"): {
+                case ("int"): {
                     sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
                             PreferenceManager
                                     .getDefaultSharedPreferences(preference.getContext())
@@ -137,7 +158,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                     .getFloat(preference.getKey(), -1.0f));
                     break;
                 }
-                case ("StringSet"): {
+                case ("Set<String>"): {
                     sBindPreferenceSummaryToValueListener.onPreferenceChange(preference,
                             PreferenceManager
                                     .getDefaultSharedPreferences(preference.getContext())
@@ -152,11 +173,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         bindPreferenceSummaryToValue(preference, "String");
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setupActionBar();
-    }
 
     /**
      * Set up the {@link android.app.ActionBar}, if the API is available.
@@ -169,22 +185,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public boolean onIsMultiPane() {
-        return isXLargeTablet(this);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
-    public void onBuildHeaders(List<Header> target) {
-        loadHeadersFromResource(R.xml.pref_headers, target);
-    }
 
     /**
      * This method stops fragment injection in malicious applications.
@@ -195,16 +195,22 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 || GeneralPreferenceFragment.class.getName().equals(fragmentName);
     }
 
+
     /**
      * This fragment is used to Display closer information. It is used when the
      * activity is showing a two-pane settings UI.
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public static class GeneralPreferenceFragment extends PreferenceFragment {
+        private LinkedList<String> pm_changed;
+        private SettingsActivity pm_host;
+
         @Override
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
+            pm_changed = new LinkedList<>();
             Bundle args = getArguments();
+            pm_host = (SettingsActivity) getActivity();
             if (args != null) {
                 String purpose = args.getString("use");
                 if (purpose != null) {
@@ -249,7 +255,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 if (purpose != null) {
                     switch (purpose) {
                         case ("view"): {
-                            bindPreferenceSummaryToValue(findPreference(KEY_VIEW_CURSORCOLOR));
+                            bindPreferenceSummaryToValue(findPreference(KEY_VIEW_GRAPHCOLOR));
                             break;
                         }
                         case ("data"): {
@@ -284,6 +290,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         }
 
         @Override
+        public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+            pm_changed.add(preference.getKey());
+            return super.onPreferenceTreeClick(preferenceScreen, preference);
+        }
+
+        @Override
         public boolean onOptionsItemSelected(MenuItem item) {
             int id = item.getItemId();
             if (id == android.R.id.home) {
@@ -293,6 +305,4 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             return super.onOptionsItemSelected(item);
         }
     }
-
-
 }

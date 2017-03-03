@@ -144,6 +144,18 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         throw new UnsupportedOperationException("you may not interfere with internal reading");
     }
 
+    @Override
+    public void setTimer(long scheduleRate) {
+        m_ScheduleRate = scheduleRate;
+        resetTimer();
+        m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
+    }
+
+    @Override
+    public long getTimerRate() {
+        return m_ScheduleRate;
+    }
+
     private List<BluetoothDataSet> copyData(List<BluetoothDataSet> toCopy) {
         List<BluetoothDataSet> clone = new Vector<BluetoothDataSet>();
         for (BluetoothDataSet data :
@@ -206,7 +218,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             try {
                 int received = m_Reader.read(bufferedInput);  //reading input from the Bluetooth-Queue into the Buffer
                 if(received>0) {
-                    m_receiveListener.onPreReceive();
+                    if (m_receiveListener != null) m_receiveListener.onPreReceive();
                     recognizeArduinoSend(bufferedInput,received);
                     if (pm_Temps.size() >0 &&
                         pm_Humids.size()>0 &&
@@ -218,7 +230,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, humidity, soilMoisture);
                         m_receivedData.add(toAdd);
                         clearLists();
-                        m_receiveListener.onPostReceive();
+                        if (m_receiveListener != null) m_receiveListener.onPostReceive();
                     }
                 }
             } catch (IOException e) {

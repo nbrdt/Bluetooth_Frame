@@ -98,10 +98,14 @@ public class DiagramManager {
     }
 
     public void update() {
-        m_current.updateDiagram(m_refresher.onRefreshRequest(m_current.getSettings()));
-        ;
+        if (m_current != null) {
+            m_current.updateDiagram(m_refresher.onRefreshRequest(m_current.getSettings()));
+        }
     }
 
+    public void setDiagrams(List<DiagramSettings> diagrams) {
+        m_diagrams = diagrams;
+    }
 
     public interface DataProvider {
         public ArrayList<Integer> onRefreshRequest(DiagramSettings fragmentDescription);
