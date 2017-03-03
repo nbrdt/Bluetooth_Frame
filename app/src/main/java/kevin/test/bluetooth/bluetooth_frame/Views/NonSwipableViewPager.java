@@ -26,8 +26,12 @@ public class NonSwipableViewPager extends ViewPager {
         this.swipeable = swipeable;
     }
 
+    public boolean isSwipeable() {
+        return this.swipeable;
+    }
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent arg0) {
-        return (this.swipeable) ? super.onInterceptTouchEvent(arg0) : false;
+        return (isSwipeable()) && super.onInterceptTouchEvent(arg0);
     }
 }

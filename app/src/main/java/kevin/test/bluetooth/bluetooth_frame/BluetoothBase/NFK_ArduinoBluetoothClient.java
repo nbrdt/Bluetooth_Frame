@@ -147,8 +147,10 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     @Override
     public void setTimer(long scheduleRate) {
         m_ScheduleRate = scheduleRate;
-        resetTimer();
-        m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
+        if (getConnectionState() == CONNECTION_STATE_CONNECTED) {
+            resetTimer();
+            m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
+        }
     }
 
     @Override

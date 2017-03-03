@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
@@ -27,8 +28,6 @@ import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,6 +36,7 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothConnectionSta
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
+import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
@@ -47,6 +47,7 @@ import kevin.test.bluetooth.bluetooth_frame.Views.*;
 public class DiagramActivity extends AppCompatActivity implements DiagramManager.DataProvider {
 
 
+    private static final String LOG_TAG = "Diagram Activity";
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
      * fragments for each of the sections. We use a
@@ -57,7 +58,8 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
      */
     private SectionsPagerAdapter mSectionsPagerAdapter;
     private BluetoothDataProvider m_dataProvider;
-    private ArduinoBluetoothClient client;
+    private ArduinoBluetoothClient m_client;
+    private DiagramViewSettings m_viewSettings;
 
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
@@ -111,7 +113,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(DiagramActivity.this);
             try {
-                client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
+                m_client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
             } catch (NumberFormatException e) {
                 Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
                 try {
@@ -119,23 +121,23 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
                         this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
                     }
                 } catch (InterruptedException e1) {
-                    Log.e("ERROR", "Showing error was interrupted", e1);
+                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
                 }
                 finish();
             }
-            if (client != null) {
+            reloadSettings();
+            if (m_client != null) {
                 try {
-                    client.connectBT(addresse, 1);
-                }
-             catch (BluetoothConnectionStateException e) {
-                Log.e("ERROR", "connection Error", e);
+                    m_client.connectBT(addresse, 1);
+                } catch (BluetoothConnectionStateException e) {
+                    Log.e(LOG_TAG, "connection Error", e);
                 Toast.makeText(getApplicationContext(), "could not connect Client", Toast.LENGTH_LONG);
                 try {
                     synchronized (this) {
                         this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
                     }
                 } catch (InterruptedException e1) {
-                    Log.e("ERROR", "Showing error was interrupted", e1);
+                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
                 }
                 finish();
             }
@@ -148,7 +150,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
                 this.wait(1000);  //somehow it doesn't show the toast, if it doesn't get some time for it
             }
         } catch (InterruptedException e1) {
-            Log.e("ERROR", "Showing error was interrupted", e1);
+            Log.e(LOG_TAG, "Showing error was interrupted", e1);
         }
         finish();
     }
@@ -156,13 +158,33 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
     }
 
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        try {
+            m_bluetoothData = m_dataProvider.readData();
+        } catch (UnrecognizableBluetoothDataException e) {
+            Log.e(LOG_TAG, "Data could not be read", e);
+        }
+        m_temperatureValues = new ArrayList<>();
+        m_humidityValues = new ArrayList<>();
+        m_soilValues = new ArrayList<>();
+        for (BluetoothDataSet data :
+                m_bluetoothData) {
+            m_temperatureValues.add(data.getTemperature().intValue());
+            m_humidityValues.add(data.getHumidity().intValue());
+            m_soilValues.add(data.getSoilMoisture().intValue());
+        }
+    }
 
 
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_diagram, menu);
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.main_actionbar_menu, menu);
+        inflater.inflate(R.menu.menu_diagram, menu);
         return true;
     }
 
@@ -173,21 +195,25 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            Intent startSettings = new Intent(this, SettingsActivity.class);
-            startActivity(startSettings);
-            return true;
-        }
-        if(id == R.id.action_refresh) {
-            Log.e("Toolbar", "Refreshing");
-        }
-        if(id == R.id.action_disconnect) {
-            finish();
-            return true;
-        }
 
-        return super.onOptionsItemSelected(item);
+        switch (id) {
+            case (R.id.main_actionbar_menu_item_settings): {
+                Intent startSettings = new Intent(this, SettingsActivity.class);
+                startActivityForResult(startSettings, SettingsActivity.REQUESTCODE);
+                return true;
+            }
+            case (R.id.action_refresh): {
+                Log.e(LOG_TAG, "Refreshing is not supported yet");
+                return super.onOptionsItemSelected(item);
+            }
+            case (R.id.action_disconnect): {
+                finish();
+                return true;
+            }
+            default: {
+                return super.onOptionsItemSelected(item);
+            }
+        }
     }
 
     @Override
@@ -200,8 +226,8 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (client != null) {
-            client.destroy();
+        if (m_client != null) {
+            m_client.destroy();
         }
     }
 
@@ -259,12 +285,52 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
             }
         }
         return null;
+    }*/
+
+    private void reloadSettings() {
+        loadConnectionSettings();
+        loadViewSettings();
+    }
+
+    private void loadConnectionSettings() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if (m_client != null) {
+            long timerRate;
+            try {
+                timerRate = Long.parseLong(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE));
+                if (m_client.getTimerRate() != timerRate) {
+                    m_client.setTimer(timerRate);
+                }
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
+                try {
+                    synchronized (this) {
+                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
+                    }
+                } catch (InterruptedException e1) {
+                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
+                }
+                finish();
+            }
+        }
+    }
+
+    private void loadViewSettings() {
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        if (m_viewSettings == null) {
+            m_viewSettings = DiagramViewSettings.getDefaultSettings();
+        }
+        int graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
+        boolean changed = false;
+        if (graphColor != m_viewSettings.getGraphColor()) {
+            m_viewSettings.setGraphColor(graphColor);
+        }
     }
 
     private void refreshData() {
-        List<BluetoothDataSet> received = client.getReceivedData();
+        List<BluetoothDataSet> received = m_client.getReceivedData();
         if (received != null) {
-            client.clearReceivedData();
+            m_client.clearReceivedData();
             for (BluetoothDataSet data :
                     received) {
                 m_bluetoothData.add(data);
@@ -297,7 +363,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
         m_temperatureValues = new ArrayList<>(size);
         m_humidityValues = new ArrayList<>(size);
         m_soilValues = new ArrayList<>(size);
-    }*/
+    }
 
 
 
@@ -366,20 +432,20 @@ public class DiagramActivity extends AppCompatActivity implements DiagramManager
                     switch (getArguments().getInt(ARG_SECTION_NUMBER)-1) {
                         case 0:
                             //settings = new DiagramSettings("Temperature", "°C", width, height, -25, 100);
-                            //viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(viewSettings);
+                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
+                            //settings.setViewSettings(m_viewSettings);
                             shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), -25, 100, "°C");
                             break;
                         case 1:
                             //settings = new DiagramSettings("Humidity", "%", width, height, 0, 100);
-                            //viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(viewSettings);
+                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
+                            //settings.setViewSettings(m_viewSettings);
                             shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
                             break;
                         case 2:
                             //settings = new DiagramSettings("Soil Moisture", "%", width, height, 0, 100);
-                            //viewSettings = DiagramViewSettings.getDefaultSettings();
-                            //settings.setViewSettings(viewSettings);
+                            //m_viewSettings = DiagramViewSettings.getDefaultSettings();
+                            //settings.setViewSettings(m_viewSettings);
                             shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(10), 0, 100, "%");
                             break;
                     }
