@@ -33,6 +33,7 @@ import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramManager;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramSettings;
 import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 
+
 public class Connected extends AppCompatActivity implements DiagramManager.DataProvider {
     private static final String LOG_TAG = "Connected Activity";
     private static final String FRAGMENT_TAG_TEMPERATURE = "Temperature";
@@ -40,11 +41,9 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
     private static final String FRAGMENT_TAG_SOILMOISTURE = "Soil Moisture";
 
     private ArduinoBluetoothClient client;
-    private Button refreshButton;
     private DiagramSettings m_globalSettings;
     private DiagramManager m_diagramManager;
     private BluetoothDataProvider m_dataProvider;
-    private ActionBar m_actionBar;
 
     private List<DiagramSettings> m_diagrams;
     private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
@@ -59,9 +58,6 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
         setContentView(R.layout.activity_connected);
         m_dataProvider = new BluetoothDataProvider(getApplicationContext());
         String addresse = getIntent().getExtras().getString("addresse");
-
-        Toast.makeText(getApplicationContext(), addresse, Toast.LENGTH_SHORT).show();
-
 
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);
@@ -94,6 +90,7 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                     " width:" + width +
                                     " height: " + height);
                             DiagramViewSettings viewSettings = DiagramViewSettings.getDefaultSettings();
+
                             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(Connected.this);  // ab hier können die Farb einstellungen eingebaut werden
                             viewSettings.setGraphColor(Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_CURSORCOLOR, "-65536")));
                             m_globalSettings = new DiagramSettings(viewSettings, null, null, height, width, Integer.MIN_VALUE, Integer.MAX_VALUE);
@@ -123,13 +120,10 @@ public class Connected extends AppCompatActivity implements DiagramManager.DataP
                                     0,
                                     100));
                             m_diagramManager = new DiagramManager(host, l, m_diagrams, host);
-                            m_diagramManager.showDiagram(FRAGMENT_TAG_TEMPERATURE);
+                            m_diagramManager.showDiagram(FRAGMENT_TAG_HUMIDITY);
                             Log.i(LOG_TAG, "Diagram Manager has been created");
                         }
                     });
-                    Toolbar usedToolbar = (Toolbar) findViewById(R.id.connected_toolbar);
-                    setSupportActionBar(usedToolbar);
-                    m_actionBar = getSupportActionBar();
 
                 } catch (BluetoothConnectionStateException e) {
                     Log.e(LOG_TAG, "connection Error", e);

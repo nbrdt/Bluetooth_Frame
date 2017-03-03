@@ -22,7 +22,11 @@
         <activity android:name=".DeviceList" />
         <activity
             android:name=".SettingsActivity"
-            android:label="@string/title_activity_settings"></activity>
+            android:label="@string/title_activity_settings" />
+        <activity
+            android:name=".DiagramActivity"
+            android:label="@string/title_activity_diagram"
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 
 </manifest>

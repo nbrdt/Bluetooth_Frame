@@ -59,7 +59,7 @@ public class DeviceList extends ListActivity {
         super.onListItemClick(l, v, position, id);
         String chosen = addresses.get(position);
         Log.i(LOG_TAG, "List item was chosen: " + chosen);
-        Intent intent = new Intent(this, Connected.class);
+        Intent intent = new Intent(this, DiagramActivity.class);
         intent.putExtra("addresse", chosen);
         startActivity(intent);
     }
