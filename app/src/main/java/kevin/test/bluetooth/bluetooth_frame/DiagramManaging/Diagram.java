@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
@@ -39,29 +40,23 @@ public class Diagram extends View {
         context = con;
         setSettings(settings);
         werte = messwerte;
+        //xMeasurement = settings.getWidth() / werte.size();
 
         yMeasurement = settings.getHeight() / (settings.getMax() - settings.getMin());
+
         if (werte.size() > 0)
             xMeasurement = settings.getWidth() / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
         else xMeasurement = 1;
+
     }
 
 
-    public Diagram(Context con, int hei, int wid, List<Integer> messwerte, int min, int max, String einh) {
-        super(con);
-        context = con;
-        settings = new DiagramSettings(DiagramViewSettings.getDefaultSettings(), DiagramSettings.nameless, einh, hei, wid, min, max);
-        viewSettings = settings.getViewSettings();
-        werte = messwerte;
 
-        yMeasurement = settings.getHeight() / (settings.getMax() - settings.getMin());
-        if (werte.size() > 0)
-            xMeasurement = settings.getWidth() / werte.size();  // TODO passende Lösung anstatt dieser Notlösung
-        else xMeasurement = 1;
-    }
 
     public void onDraw(Canvas canvas) {
         super.onDraw(canvas);  //always call the super method...
+
+
         paint.setColor(viewSettings.getFrameColor());
         paint.setStrokeWidth(viewSettings.getFrameStrokeSize());
         paint.setStyle(viewSettings.getFrameStyle());
@@ -77,7 +72,7 @@ public class Diagram extends View {
             canvas.drawLine(0, zero, settings.getWidth(), zero, paint);
             canvas.drawText("0" + settings.getUnit(), paint.getTextSize() / 2, zero + paint.getTextSize(), paint);
 
-
+            //mittlere Orientierungslinie
             canvas.drawLine(0, center, settings.getWidth(), center, paint);
             canvas.drawText(((settings.getMax() + settings.getMin()) / 2) + settings.getUnit(), paint.getTextSize() / 2, center + paint.getTextSize(), paint);
 
@@ -85,6 +80,7 @@ public class Diagram extends View {
             //oberste Orientierungslinie
             canvas.drawLine(0, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
             canvas.drawText(settings.getMax() + settings.getUnit(), paint.getTextSize() / 2, center - ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement) + paint.getTextSize(), paint);
+
 
             //unterste Orientierungslinie
             canvas.drawLine(0, center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), settings.getWidth(), center + ((settings.getMax() - ((settings.getMax() + settings.getMin()) / 2)) * yMeasurement), paint);
@@ -167,9 +163,9 @@ public class Diagram extends View {
 
 
     public void addWert(int neu) {
-        if(werte.size()>0)werte.remove(0);//TODO passende Lösung anstatt dieser NotLösung
+        if(werte.size()>0)werte.remove(0);
         werte.add(neu);
-        //invalidate(); //TODO passende Lösung anstatt dieser Notlösung
+        invalidate(); //TODO ?
     }
 
     public interface DiagramValueViewer {

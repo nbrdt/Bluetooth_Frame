@@ -92,6 +92,7 @@ public class DiagramFragment extends Fragment {
         args.putBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS, viewSettings.createToBundle());
         fragment.setArguments(args);
         fragment.setDiagram(null);
+
         return fragment;
     }
 
@@ -127,6 +128,7 @@ public class DiagramFragment extends Fragment {
             int min = args.getInt(INSTANCESTATE_DIAGRAM_MINVALUE);
             int max = args.getInt(INSTANCESTATE_DIAGRAM_MAXVALUE);
             m_values = args.getIntegerArrayList(INSTANCESTATE_DIAGRAM_VALUES);
+
             String unit = args.getString(INSTANCESTATE_DIAGRAM_UNIT);
             DiagramViewSettings viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(INSTANCESTATE_DIAGRAMVIEWSETTINGS));
             m_settings = new DiagramSettings(viewSettings, name, unit, height, width, min, max);
