@@ -3,8 +3,6 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.os.Handler;
-import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -16,15 +14,12 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -260,32 +255,32 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     @Override
     public void onPostReceive() {
+        updateFragment();
+    }
+
+    private void updateFragment() {
         DiagramFragment fragment = (DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
         if (fragment != null) {
-            updateFragment(fragment);
+            fragment.updateDiagram();
         }
     }
 
     @Override
     public void onRefreshRequest(DiagramFragment requester) {
-
-    }
-
-    private void updateFragment(DiagramFragment fragment) {
         Log.i(LOG_TAG, "Refreshing Diagram");
         processData();
-        String title = mSectionsPagerAdapter.getPageTitle(fragment.getSectionNumber() - 1).toString();
+        String title = mSectionsPagerAdapter.getPageTitle(requester.getSectionNumber() - 1).toString();
         switch (title) {
             case (DIAGRAM_NAME_SOIL): {
-                fragment.updateDiagram(m_soilValues);
+                requester.resetValues(m_soilValues);
                 break;
             }
             case (DIAGRAM_NAME_HUMID): {
-                fragment.updateDiagram(m_humidityValues);
+                requester.resetValues(m_humidityValues);
                 break;
             }
             default: {
-                fragment.updateDiagram(m_temperatureValues);
+                requester.resetValues(m_temperatureValues);
                 break;
             }
         }
@@ -418,7 +413,9 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
         @Override
         public Fragment getItem(int position) {
-            return DiagramFragment.newInstance(position + 1, m_viewSettings);
+            DiagramFragment fragment = DiagramFragment.newInstance(position + 1, m_viewSettings);
+            fragment.setRefresher(DiagramActivity.this);
+            return fragment;
         }
 
         //Amount of tabs

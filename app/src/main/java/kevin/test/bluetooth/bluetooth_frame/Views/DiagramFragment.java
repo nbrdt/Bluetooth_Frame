@@ -66,6 +66,10 @@ public class DiagramFragment extends Fragment {
         }
     }
 
+    public void setRefresher(RefreshListener listener) {
+        refresher = listener;
+    }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -124,13 +128,13 @@ public class DiagramFragment extends Fragment {
     }
 
 
-    public void updateDiagram(ArrayList<Integer> newValues) {
+    public void resetValues(ArrayList<Integer> newValues) {
         values = newValues;
-        updateDiagram();
     }
 
     public void updateDiagram() {
         if (shownDiagram != null) {
+            refresher.onRefreshRequest(this);
             shownDiagram.updateList(values);
             Handler refresher = new Handler(Looper.getMainLooper());
             refresher.post(new Runnable() {
