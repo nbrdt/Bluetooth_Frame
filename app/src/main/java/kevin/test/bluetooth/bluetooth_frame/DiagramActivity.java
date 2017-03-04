@@ -40,7 +40,6 @@ import kevin.test.bluetooth.bluetooth_frame.Views.NonSwipableViewPager;
 //author: NB, KI
 
 public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener, ViewPager.OnPageChangeListener, ActivityResults {
-    public static final int REQUEST_CODE = 6;
     private static final String DIAGRAM_NAME_TEMP = "Temperature";
     private static final String DIAGRAM_NAME_HUMID = "Humidity";
     private static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
@@ -171,12 +170,12 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         switch (id) {
             case (R.id.main_actionbar_menu_item_settings): {
                 Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivityForResult(startSettings, SettingsActivity.REQUEST_CODE);
+                startActivityForResult(startSettings, SETTINGSACTIVITY_REQUEST_CODE);
                 return true;
             }
             case (R.id.action_refresh): {
-                Log.e(LOG_TAG, "Refreshing is not supported yet");
-                return super.onOptionsItemSelected(item);
+                updateFragment();
+                return true;
             }
             case (R.id.action_disconnect): {
                 finish();
@@ -206,7 +205,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SettingsActivity.REQUEST_CODE) {
+        if (requestCode == SETTINGSACTIVITY_REQUEST_CODE) {
             if (resultCode != SettingsActivity.RESULT_ERROR) {
                 reloadSettings();
             } else {

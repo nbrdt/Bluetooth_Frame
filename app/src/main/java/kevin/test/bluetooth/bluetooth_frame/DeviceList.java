@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -18,7 +19,6 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothInactivityExc
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
 public class DeviceList extends ListActivity implements ActivityResults {
-    public static final int REQUEST_CODE = 1;
     private ArrayAdapter<String> addressAdapter;
     private static final String LOG_TAG = "Device List";
     List<String> addresses;
@@ -27,22 +27,7 @@ public class DeviceList extends ListActivity implements ActivityResults {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         client = NFK_ArduinoBluetoothClient.getClient();
-        try {
-            addresses = client.getAddressesAndNames(true);
-        } catch (BluetoothInactivityException e) {
-            Log.e(LOG_TAG, "Bluetooh is inactive, needs to be activated", e);
-            Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(turnBTon,1);
-            try {
-                addresses = client.getAddressesAndNames(true);
-            } catch (BluetoothInactivityException e1) {
-                Log.e(LOG_TAG, "unable to activate Bluetooth", e1);
-                finish();
-                return;
-            }
-        }
-        addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, addresses);
-        setListAdapter(addressAdapter);
+        setList();
     }
 
     /**
@@ -63,7 +48,7 @@ public class DeviceList extends ListActivity implements ActivityResults {
         Log.i(LOG_TAG, "List item was chosen: " + chosen);
         Intent intent = new Intent(this, DiagramActivity.class);
         intent.putExtra("addresse", chosen);
-        startActivityForResult(intent, DiagramActivity.REQUEST_CODE);
+        startActivityForResult(intent, DIAGRAMACTIVITY_REQUEST_CODE);
     }
 
     /**
@@ -85,9 +70,15 @@ public class DeviceList extends ListActivity implements ActivityResults {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == DiagramActivity.REQUEST_CODE) {
+        if (requestCode == DIAGRAMACTIVITY_REQUEST_CODE) {
             if (resultCode == DiagramActivity.RESULT_ERROR) {
                 showActivityError(data);
+            }
+        } else if (requestCode == ACTIVATEBLUETOOTH_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                this.recreate();
+            } else {
+                finishWithError("Bluetooth could not be activated - Cannot Proceed without valid Bluetooth Connection.");
             }
         }
     }
@@ -96,7 +87,7 @@ public class DeviceList extends ListActivity implements ActivityResults {
     public void setErrorMessage(String message) {
         Intent data = new Intent("Closed on Error");
         data.putExtra(RESULTKEY_ERROR_MESSAGE, message);
-        setResult(RESULT_CANCELED, data);
+        setResult(RESULT_ERROR, data);
     }
 
     @Override
@@ -108,5 +99,17 @@ public class DeviceList extends ListActivity implements ActivityResults {
     @Override
     public void showActivityError(Intent errorMessage) {
         Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
+    }
+
+    private void setList() {
+        try {
+            addresses = client.getAddressesAndNames(true);
+            addressAdapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, addresses);
+            setListAdapter(addressAdapter);
+        } catch (BluetoothInactivityException e) {
+            Log.e(LOG_TAG, "Bluetooh is inactive, needs to be activated", e);
+            Intent turnBTon = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(turnBTon, 1);
+        }
     }
 }

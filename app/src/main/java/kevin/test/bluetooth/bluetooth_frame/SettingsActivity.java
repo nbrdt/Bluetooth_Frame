@@ -36,7 +36,6 @@ import java.util.TreeSet;
  * API Guide</a> for more information on developing a Settings UI.
  */
 public class SettingsActivity extends AppCompatPreferenceActivity implements ActivityResults {
-    public static final int REQUEST_CODE = 2;
     public static final String KEY_VIEW_GRAPHCOLOR = "draw_color";
     public static final String PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR = "-65536";
     public static final String KEY_DATA_DELETEONFINISH = "delete_on_finish";

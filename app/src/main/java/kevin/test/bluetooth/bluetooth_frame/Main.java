@@ -36,9 +36,9 @@ public class Main extends AppCompatActivity implements ActivityResults {
         setSupportActionBar(usedToolbar);
         m_actionBar = getSupportActionBar();
         PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_data, false);
-        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_headers, false);
         PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_connection, false);
         PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_view, false);
+        PreferenceManager.setDefaultValues(getApplicationContext(), R.xml.pref_headers, false);
     }
 
     @Override
@@ -83,7 +83,7 @@ public class Main extends AppCompatActivity implements ActivityResults {
 
     @Override
     public void showActivityError(Intent errorMessage) {
-        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_LONG).show();
     }
 
     /**
@@ -124,7 +124,7 @@ public class Main extends AppCompatActivity implements ActivityResults {
         switch (item.getItemId()) {
             case (R.id.main_actionbar_menu_item_settings): {
                 Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivityForResult(startSettings, SettingsActivity.REQUEST_CODE);
+                startActivityForResult(startSettings, SETTINGSACTIVITY_REQUEST_CODE);
                 return true;
             }
             default:
@@ -137,13 +137,13 @@ public class Main extends AppCompatActivity implements ActivityResults {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         switch (requestCode) {
-            case (DeviceList.REQUEST_CODE): {
+            case (DEVICELIST_REQUEST_CODE): {
                 if (resultCode == DeviceList.RESULT_ERROR) {
                     showActivityError(data);
                 }
                 break;
             }
-            case (SettingsActivity.REQUEST_CODE): {
+            case (SETTINGSACTIVITY_REQUEST_CODE): {
                 if (resultCode == SettingsActivity.RESULT_ERROR) {
                     showActivityError(data);
                 }
@@ -154,6 +154,6 @@ public class Main extends AppCompatActivity implements ActivityResults {
 
     public void showDeviceListClicked(View v) {
         Intent showAddresses = new Intent(Main.this, DeviceList.class);
-        startActivityForResult(showAddresses, DeviceList.REQUEST_CODE);
+        startActivityForResult(showAddresses, DEVICELIST_REQUEST_CODE);
     }
 }
