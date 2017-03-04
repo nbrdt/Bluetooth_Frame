@@ -1,4 +1,4 @@
-package kevin.test.bluetooth.bluetooth_frame.DiagramManaging;
+package kevin.test.bluetooth.bluetooth_frame.Views;
 
 import android.graphics.Color;
 import android.graphics.Paint.Style;

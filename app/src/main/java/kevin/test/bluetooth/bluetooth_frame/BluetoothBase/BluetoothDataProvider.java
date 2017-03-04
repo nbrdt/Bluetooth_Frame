@@ -17,6 +17,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Vector;
 
 /**
  * writes and reads Data File of name received_data:
@@ -66,7 +67,7 @@ public class BluetoothDataProvider {
 
     private List<BluetoothDataSet> readData(boolean leaveInputStreamOpen) throws UnrecognizableBluetoothDataException {
         checkAndRecreate(true, false);  //throws UnrecognizableBluetoothDataException
-        List<BluetoothDataSet> readData = new LinkedList<>();
+        List<BluetoothDataSet> readData = new Vector<>();
         try {
             //m_FileReader.reset();
             String read;

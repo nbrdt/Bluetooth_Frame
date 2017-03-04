@@ -40,12 +40,11 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
-import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 import kevin.test.bluetooth.bluetooth_frame.Views.*;
 
 //author: NB, KI
 
-public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener {
+public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener {
     private static final String DIAGRAM_NAME_TEMP = "Temperature";
     private static final String DIAGRAM_NAME_HUMID = "Humidity";
     private static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
@@ -65,7 +64,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     private ArduinoBluetoothClient m_client;
     DiagramViewSettings m_viewSettings;
 
-    private List<BluetoothDataSet> m_bluetoothData = new Vector<>();
+    private Vector<BluetoothDataSet> m_bluetoothData = new Vector<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
     private ArrayList<Integer> m_humidityValues = new ArrayList<>();
     private ArrayList<Integer> m_soilValues = new ArrayList<>();
@@ -166,7 +165,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     public void onStart() {
         super.onStart();
         try {
-            m_bluetoothData = m_dataProvider.readData();
+            m_bluetoothData = (Vector<BluetoothDataSet>) m_dataProvider.readData();
         } catch (UnrecognizableBluetoothDataException e) {
             Log.e(LOG_TAG, "Data could not be read", e);
         }
@@ -261,11 +260,19 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     @Override
     public void onPostReceive() {
-        DiagramActivity.DiagramFragment fragment = (DiagramActivity.DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
-        updateFragment(fragment);
+        DiagramFragment fragment = (DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
+        if (fragment != null) {
+            updateFragment(fragment);
+        }
     }
 
-    private void updateFragment(DiagramActivity.DiagramFragment fragment) {
+    @Override
+    public void onRefreshRequest(DiagramFragment requester) {
+
+    }
+
+    private void updateFragment(DiagramFragment fragment) {
+        Log.i(LOG_TAG, "Refreshing Diagram");
         processData();
         String title = mSectionsPagerAdapter.getPageTitle(fragment.getSectionNumber() - 1).toString();
         switch (title) {
@@ -385,7 +392,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     private void loadViewSettings() {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        DiagramActivity.DiagramFragment fragment = (DiagramActivity.DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
+        DiagramFragment fragment = (DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
         if (m_viewSettings == null) {
             m_viewSettings = DiagramViewSettings.getDefaultSettings();
         }
@@ -397,126 +404,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     }
 
 
-
-
-    /**-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-     * A fragment containing the Diagram. When clicking on one tab, the right Diagram is put into the fragment
-     */
-    public static class DiagramFragment extends Fragment {
-
-        private DiagramViewSettings viewSettings;
-        private int sectionNumber;
-
-        private DiagrammAllgemein shownDiagram;
-        LinearLayout layout;
-
-        private ArrayList<Integer> values;
-
-        private static final String ARG_SECTION_NUMBER = "section_number";
-        private static final String ARG_VIEWSETTINGS = "section_number";
-
-        public DiagramFragment() {
-        }
-
-        /**
-         * Returns a new instance of this fragment for the given section
-         * number.
-         */
-        public static DiagramFragment newInstance(int sectionNumber, DiagramViewSettings viewSettings) {
-            DiagramFragment fragment = new DiagramFragment();
-            fragment.viewSettings = viewSettings; // Bundles don't work anymore (latest STABLE SDK update), they only save the last given value (every other is registered as null)
-            fragment.sectionNumber = sectionNumber;
-            return fragment;
-        }
-
-
-        @Override
-        public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                                 Bundle savedInstanceState) {
-
-            final View rootView = inflater.inflate(R.layout.tab_layout, container, false);
-            layout = (LinearLayout)rootView.findViewById(R.id.layout);
-            Bundle args = getArguments();
-            final int diagramToShow = sectionNumber - 1;
-
-            //Is necessary to get the height and width of the layout
-            layout.post(new Runnable() {
-                @Override
-                public void run() {
-
-                    final float touchWidth = layout.getWidth();
-                    final int layoutWidth = (int)touchWidth;
-
-                    int width = layoutWidth;
-                    int height = (int) Math.round(layoutWidth*0.6);
-
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
-
-                    shownDiagram = null;
-                    Bundle args = getArguments();
-
-                    switch (diagramToShow) {
-                        case 0: {
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
-                            break;
-                        }
-                        case 1: {
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 0, 100, "%", viewSettings);
-                            break;
-                        }
-                        case 2: {
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 20, 80, "%", viewSettings);
-                            break;
-                        }
-                        default: {
-                            shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
-                        }
-                    }
-
-                    shownDiagram.setDiagramFragment(DiagramFragment.this);
-                    shownDiagram.setBackgroundColor(Color.WHITE);
-                    shownDiagram.setLayoutParams(params);
-                    layout.addView(shownDiagram);
-                }
-            });
-
-
-            return rootView;
-
-
-        }
-
-
-        public void updateDiagram(ArrayList<Integer> newValues) {
-            values = newValues;
-            updateDiagram();
-        }
-
-        public void updateDiagram() {
-            if (shownDiagram != null) {
-                shownDiagram.updateList(values);
-                Handler refresher = new Handler(Looper.getMainLooper());
-                refresher.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        shownDiagram.invalidate();
-                    }
-                });
-            }
-        }
-
-        public void setViewSettings(DiagramViewSettings settings) {
-            this.viewSettings = settings;
-            if (shownDiagram != null) {
-                shownDiagram.setViewSettings(viewSettings);
-                updateDiagram();
-            }
-        }
-
-        public int getSectionNumber() {
-            return sectionNumber;
-        }
-    }
 
     /**
      * A {@link FragmentPagerAdapter} that returns a fragment corresponding to

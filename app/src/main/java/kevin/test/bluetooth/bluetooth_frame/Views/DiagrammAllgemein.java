@@ -12,10 +12,9 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 import kevin.test.bluetooth.bluetooth_frame.DiagramActivity;
-import kevin.test.bluetooth.bluetooth_frame.DiagramManaging.DiagramViewSettings;
 
 /**
- * Created by Niklas on 23.01.2017.
+ * Created by NB on 23.01.2017.
  */
 
 public class DiagrammAllgemein extends View {
@@ -41,7 +40,7 @@ public class DiagrammAllgemein extends View {
 
     private DiagramViewSettings viewSettings;
 
-    private DiagramActivity.DiagramFragment fragment; 
+    private DiagramFragment fragment;
 
 
 
@@ -185,7 +184,7 @@ public class DiagrammAllgemein extends View {
         werte = newValues;
     }
 
-    public void setDiagramFragment(DiagramActivity.DiagramFragment frag) {
+    public void setDiagramFragment(DiagramFragment frag) {
         this.fragment = frag;
     }
 
