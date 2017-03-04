@@ -32,6 +32,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Vector;
 
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothConnectionStateException;
@@ -64,7 +65,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     private ArduinoBluetoothClient m_client;
     DiagramViewSettings m_viewSettings;
 
-    private List<BluetoothDataSet> m_bluetoothData = new LinkedList<>();
+    private List<BluetoothDataSet> m_bluetoothData = new Vector<>();
     private ArrayList<Integer> m_temperatureValues = new ArrayList<>();
     private ArrayList<Integer> m_humidityValues = new ArrayList<>();
     private ArrayList<Integer> m_soilValues = new ArrayList<>();
@@ -285,11 +286,11 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
     private void processData() {
         refreshData();
-        LinkedList<BluetoothDataSet> temp = new LinkedList<>();
-        Date current = Calendar.getInstance().getTime();
         SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
         int maxBack = Integer.parseInt(pref.getString(SettingsActivity.KEY_DATA_SHOWVALUES, "10000"));
         if (maxBack > 0) {
+            Date current = Calendar.getInstance().getTime();
+            LinkedList<BluetoothDataSet> temp = new LinkedList<>();
             for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
                 BluetoothDataSet data = m_bluetoothData.get(i);
                 if ((data.getTimeStamp().getTime()) >= (current.getTime() - maxBack)) {  //he only does something if the current time is in the specified time Period
@@ -298,15 +299,21 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                     break;  //just to increase Performance
                 }
             }
+            prepareLists(temp.size());
+            for (BluetoothDataSet data :  //adding everything to the Lists
+                    temp) {
+                m_temperatureValues.add(data.getTemperature().intValue());
+                m_humidityValues.add(data.getHumidity().intValue());
+                m_soilValues.add(data.getSoilMoisture().intValue());
+            }
         } else {
-            temp = (LinkedList<BluetoothDataSet>) m_bluetoothData;
-        }
-        prepareLists(temp.size());
-        for (BluetoothDataSet data :  //adding everything to the Lists
-                temp) {
-            m_temperatureValues.add(data.getTemperature().intValue());
-            m_humidityValues.add(data.getHumidity().intValue());
-            m_soilValues.add(data.getSoilMoisture().intValue());
+            prepareLists(m_bluetoothData.size());
+            for (BluetoothDataSet data :  //adding everything to the Lists
+                    m_bluetoothData) {
+                m_temperatureValues.add(data.getTemperature().intValue());
+                m_humidityValues.add(data.getHumidity().intValue());
+                m_soilValues.add(data.getSoilMoisture().intValue());
+            }
         }
     }
 
