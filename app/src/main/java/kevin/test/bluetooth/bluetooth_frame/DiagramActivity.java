@@ -39,7 +39,7 @@ import kevin.test.bluetooth.bluetooth_frame.Views.*;
 
 //author: NB, KI
 
-public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener {
+public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener, ViewPager.OnPageChangeListener {
     private static final String DIAGRAM_NAME_TEMP = "Temperature";
     private static final String DIAGRAM_NAME_HUMID = "Humidity";
     private static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
@@ -95,10 +95,10 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                 return false;
             }
         });
+        mViewPager.addOnPageChangeListener(this);
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mViewPager);
-
         toolbar.setBackgroundColor(Color.DKGRAY);
         tabLayout.setBackgroundColor(Color.DKGRAY);
         mViewPager.setBackgroundColor(Color.LTGRAY);
@@ -258,13 +258,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         updateFragment();
     }
 
-    private void updateFragment() {
-        DiagramFragment fragment = (DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
-        if (fragment != null) {
-            fragment.updateDiagram();
-        }
-    }
-
     @Override
     public void onRefreshRequest(DiagramFragment requester) {
         Log.i(LOG_TAG, "Refreshing Diagram");
@@ -283,6 +276,28 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                 requester.resetValues(m_temperatureValues);
                 break;
             }
+        }
+    }
+
+    @Override
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+    }
+
+    @Override
+    public void onPageSelected(int position) {
+        updateFragment();
+    }
+
+    @Override
+    public void onPageScrollStateChanged(int state) {
+
+    }
+
+    private void updateFragment() {
+        DiagramFragment fragment = (DiagramFragment) getSupportFragmentManager().findFragmentById(R.id.diagramactivity_diagramcontainer);
+        if (fragment != null) {
+            fragment.updateDiagram();
         }
     }
 

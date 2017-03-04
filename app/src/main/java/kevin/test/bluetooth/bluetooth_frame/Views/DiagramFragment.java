@@ -49,8 +49,7 @@ public class DiagramFragment extends Fragment {
         Bundle args = new Bundle();
         args.putInt(ARG_SECTION_NUMBER, sectionNumber);
         args.putBundle(ARG_VIEWSETTINGS, viewSettings.createToBundle());
-        fragment.viewSettings = viewSettings; // Bundles don't work anymore (latest STABLE SDK update), they only save the last given value (every other is registered as null)
-        fragment.sectionNumber = sectionNumber;
+        fragment.setArguments(args);
         return fragment;
     }
 
@@ -78,6 +77,8 @@ public class DiagramFragment extends Fragment {
         final View rootView = inflater.inflate(R.layout.tab_layout, container, false);
         layout = (LinearLayout) rootView.findViewById(R.id.layout);
         Bundle args = getArguments();
+        sectionNumber = args.getInt(ARG_SECTION_NUMBER);
+        viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(ARG_VIEWSETTINGS));
         final int diagramToShow = sectionNumber - 1;
 
         //Is necessary to get the height and width of the layout
@@ -95,6 +96,7 @@ public class DiagramFragment extends Fragment {
 
                 shownDiagram = null;
                 Bundle args = getArguments();
+
 
                 switch (diagramToShow) {
                     case 0: {
