@@ -18,6 +18,10 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
+/**
+ * @author KI
+ * @version 1.1
+ */
 public class Main extends AppCompatActivity implements ActivityResults {
     //Class Attributes
     private Button m_buttonShowPaired;

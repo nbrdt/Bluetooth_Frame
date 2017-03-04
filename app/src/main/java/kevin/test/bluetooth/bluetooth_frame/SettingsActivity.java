@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.TreeSet;
 
 /**
+ * @author KI & Android Studio
  * A {@link PreferenceActivity} that presents a set of application settings. On
  * handset devices, settings are presented as a single list. On tablets,
  * settings are split by category, with category headers shown to the left of

@@ -3,8 +3,8 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.content.Intent;
 
 /**
- * @author kevin
- * @version 0.0 from 04.03.2017 in Bluetooth_Frame
+ * @author KI & NB
+ * @version 1.1
  **/
 
 public interface ActivityResults {

@@ -18,6 +18,10 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothInactivityException;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
+/**
+ * @author KI
+ * @version 1.1
+ */
 public class DeviceList extends ListActivity implements ActivityResults {
     private ArrayAdapter<String> addressAdapter;
     private static final String LOG_TAG = "Device List";

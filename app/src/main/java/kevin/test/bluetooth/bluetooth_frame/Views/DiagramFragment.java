@@ -15,7 +15,8 @@ import java.util.ArrayList;
 import kevin.test.bluetooth.bluetooth_frame.R;
 
 /**
- * -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ * @author NB & KI
+ * @version 1.3
  * A fragment containing the Diagram. When clicking on one tab, the correct Diagram is put into the fragment
  */
 public class DiagramFragment extends Fragment {

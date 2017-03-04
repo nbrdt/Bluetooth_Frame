@@ -37,7 +37,10 @@ import kevin.test.bluetooth.bluetooth_frame.Views.DiagramFragment;
 import kevin.test.bluetooth.bluetooth_frame.Views.DiagramViewSettings;
 import kevin.test.bluetooth.bluetooth_frame.Views.NonSwipableViewPager;
 
-//author: NB, KI
+/**
+ * @author NB & KI
+ * @version 1.4
+ */
 
 public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener, ViewPager.OnPageChangeListener, ActivityResults {
     private static final String DIAGRAM_NAME_TEMP = "Temperature";
