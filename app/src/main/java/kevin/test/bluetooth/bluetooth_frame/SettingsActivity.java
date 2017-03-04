@@ -18,6 +18,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,8 +35,8 @@ import java.util.TreeSet;
  * href="http://developer.android.com/guide/topics/ui/settings.html">Settings
  * API Guide</a> for more information on developing a Settings UI.
  */
-public class SettingsActivity extends AppCompatPreferenceActivity {
-    public static final int REQUESTCODE = 2;
+public class SettingsActivity extends AppCompatPreferenceActivity implements ActivityResults {
+    public static final int REQUEST_CODE = 2;
     public static final String KEY_VIEW_GRAPHCOLOR = "draw_color";
     public static final String PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR = "-65536";
     public static final String KEY_DATA_DELETEONFINISH = "delete_on_finish";
@@ -65,6 +66,24 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     public void onBuildHeaders(List<Header> target) {
         loadHeadersFromResource(R.xml.pref_headers, target);
+    }
+
+    @Override
+    public void setErrorMessage(String message) {
+        Intent data = new Intent("Closed on Error");
+        data.putExtra(RESULTKEY_ERROR_MESSAGE, message);
+        setResult(RESULT_ERROR, data);
+    }
+
+    @Override
+    public void finishWithError(String message) {
+        setErrorMessage(message);
+        finish();
+    }
+
+    @Override
+    public void showActivityError(Intent errorMessage) {
+        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
     }
 
     /**

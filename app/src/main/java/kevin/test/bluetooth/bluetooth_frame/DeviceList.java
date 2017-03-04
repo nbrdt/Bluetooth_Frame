@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -16,7 +17,8 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothInactivityException;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
-public class DeviceList extends ListActivity {
+public class DeviceList extends ListActivity implements ActivityResults {
+    public static final int REQUEST_CODE = 1;
     private ArrayAdapter<String> addressAdapter;
     private static final String LOG_TAG = "Device List";
     List<String> addresses;
@@ -61,7 +63,7 @@ public class DeviceList extends ListActivity {
         Log.i(LOG_TAG, "List item was chosen: " + chosen);
         Intent intent = new Intent(this, DiagramActivity.class);
         intent.putExtra("addresse", chosen);
-        startActivity(intent);
+        startActivityForResult(intent, DiagramActivity.REQUEST_CODE);
     }
 
     /**
@@ -78,5 +80,33 @@ public class DeviceList extends ListActivity {
             client.destroy();
             client = null;
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == DiagramActivity.REQUEST_CODE) {
+            if (resultCode == DiagramActivity.RESULT_ERROR) {
+                showActivityError(data);
+            }
+        }
+    }
+
+    @Override
+    public void setErrorMessage(String message) {
+        Intent data = new Intent("Closed on Error");
+        data.putExtra(RESULTKEY_ERROR_MESSAGE, message);
+        setResult(RESULT_CANCELED, data);
+    }
+
+    @Override
+    public void finishWithError(String message) {
+        setErrorMessage(message);
+        finish();
+    }
+
+    @Override
+    public void showActivityError(Intent errorMessage) {
+        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
     }
 }

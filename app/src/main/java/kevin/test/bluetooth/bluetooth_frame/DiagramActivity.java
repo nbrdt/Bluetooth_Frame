@@ -3,23 +3,21 @@ package kevin.test.bluetooth.bluetooth_frame;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
-
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-
 import android.widget.Toast;
 
 import java.util.ArrayList;
@@ -35,15 +33,17 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataSet;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.UnrecognizableBluetoothDataException;
-import kevin.test.bluetooth.bluetooth_frame.Views.*;
+import kevin.test.bluetooth.bluetooth_frame.Views.DiagramFragment;
+import kevin.test.bluetooth.bluetooth_frame.Views.DiagramViewSettings;
+import kevin.test.bluetooth.bluetooth_frame.Views.NonSwipableViewPager;
 
 //author: NB, KI
 
-public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener, ViewPager.OnPageChangeListener {
+public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoothClient.OnReceiveListener, DiagramFragment.RefreshListener, ViewPager.OnPageChangeListener, ActivityResults {
+    public static final int REQUEST_CODE = 6;
     private static final String DIAGRAM_NAME_TEMP = "Temperature";
     private static final String DIAGRAM_NAME_HUMID = "Humidity";
     private static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
-    ;
 
     private static final String LOG_TAG = "Diagram Activity";
     /**
@@ -104,7 +104,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         mViewPager.setBackgroundColor(Color.LTGRAY);
 
 
-
         m_dataProvider = new BluetoothDataProvider(getApplicationContext());
         String addresse = getIntent().getExtras().getString("addresse");
 
@@ -113,45 +112,20 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             try {
                 m_client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
             } catch (NumberFormatException e) {
-                Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
-                try {
-                    synchronized (this) {
-                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
-                    }
-                } catch (InterruptedException e1) {
-                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
-                }
-                finish();
+                finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
             }
             reloadSettings();
             if (m_client != null) {
                 try {
                     m_client.connectBT(addresse, 1);
                 } catch (BluetoothConnectionStateException e) {
-                    Log.e(LOG_TAG, "connection Error", e);
-                Toast.makeText(getApplicationContext(), "could not connect Client", Toast.LENGTH_LONG);
-                try {
-                    synchronized (this) {
-                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
-                    }
-                } catch (InterruptedException e1) {
-                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
+                    finishWithError("Could not connect to Target Address");
                 }
-                finish();
             }
-        }
 
-    } else {
-        Toast.makeText(getApplicationContext(), "Could not read Target Address", Toast.LENGTH_SHORT).show();
-        try {
-            synchronized (this) {
-                this.wait(1000);  //somehow it doesn't show the toast, if it doesn't get some time for it
-            }
-        } catch (InterruptedException e1) {
-            Log.e(LOG_TAG, "Showing error was interrupted", e1);
+        } else {
+            finishWithError("Invalid Bluetooth-Address");
         }
-        finish();
-    }
 
     }
 
@@ -177,7 +151,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     }
 
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
@@ -198,7 +171,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         switch (id) {
             case (R.id.main_actionbar_menu_item_settings): {
                 Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivityForResult(startSettings, SettingsActivity.REQUESTCODE);
+                startActivityForResult(startSettings, SettingsActivity.REQUEST_CODE);
                 return true;
             }
             case (R.id.action_refresh): {
@@ -233,8 +206,12 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == SettingsActivity.REQUESTCODE) {
-            reloadSettings();
+        if (requestCode == SettingsActivity.REQUEST_CODE) {
+            if (resultCode != SettingsActivity.RESULT_ERROR) {
+                reloadSettings();
+            } else {
+                showActivityError(data);
+            }
         }
     }
 
@@ -259,7 +236,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     }
 
     @Override
-    public void onRefreshRequest(DiagramFragment requester) {
+    public void onRefreshRequest(DiagramFragment requester) {  //This method provides the Fragment with Data as needed
         Log.i(LOG_TAG, "Refreshing Diagram");
         processData();
         String title = mSectionsPagerAdapter.getPageTitle(requester.getSectionNumber() - 1).toString();
@@ -285,13 +262,31 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     }
 
     @Override
-    public void onPageSelected(int position) {
+    public void onPageSelected(int position) {  //This is called, whenever a new Page is shown-> Fragment needs to load data
         updateFragment();
     }
 
     @Override
     public void onPageScrollStateChanged(int state) {
 
+    }
+
+    @Override
+    public void setErrorMessage(String message) {
+        Intent data = new Intent("Closed on Error");
+        data.putExtra(RESULTKEY_ERROR_MESSAGE, message);
+        setResult(RESULT_ERROR, data);
+    }
+
+    @Override
+    public void finishWithError(String message) {
+        setErrorMessage(message);
+        finish();
+    }
+
+    @Override
+    public void showActivityError(Intent errorMessage) {
+        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
     }
 
     private void updateFragment() {
@@ -341,9 +336,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             for (BluetoothDataSet data :
                     received) {
                 m_bluetoothData.add(data);
-                m_temperatureValues.add(data.getTemperature().intValue());
-                m_humidityValues.add(data.getHumidity().intValue());
-                m_soilValues.add(data.getSoilMoisture().intValue());
             }
         }
     }
@@ -363,15 +355,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         m_soilValues = new ArrayList<>(size);
     }
 
-    private ArrayList<Integer> copyValues(ArrayList<Integer> toCopyFrom) {
-        ArrayList<Integer> copy = new ArrayList<>(toCopyFrom.size());
-        for (Integer i :
-                toCopyFrom) {
-            copy.add(i);
-        }
-        return copy;
-    }
-
     private void reloadSettings() {
         loadConnectionSettings();
         loadViewSettings();
@@ -387,15 +370,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                     m_client.setTimer(timerRate);
                 }
             } catch (NumberFormatException e) {
-                Toast.makeText(this, "Could not resolve receive Rate. You may only enter Numbers in the Settings", Toast.LENGTH_LONG).show();
-                try {
-                    synchronized (this) {
-                        this.wait(2000);  //somehow it doesn't show the toast, if it doesn't get some time for it
-                    }
-                } catch (InterruptedException e1) {
-                    Log.e(LOG_TAG, "Showing error was interrupted", e1);
-                }
-                finish();
+                finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
             }
         }
     }
@@ -412,7 +387,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             if (fragment != null) fragment.setViewSettings(m_viewSettings);
         }
     }
-
 
 
     /**
@@ -451,10 +425,6 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                     return DIAGRAM_NAME_HUMID;
             }
             return null;
-        }
-
-        public void resetViewSettings() {
-
         }
     }
 }

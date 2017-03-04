@@ -18,7 +18,7 @@ import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.ArduinoBluetoothClient
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.BluetoothDataProvider;
 import kevin.test.bluetooth.bluetooth_frame.BluetoothBase.NFK_ArduinoBluetoothClient;
 
-public class Main extends AppCompatActivity {
+public class Main extends AppCompatActivity implements ActivityResults {
     //Class Attributes
     private Button m_buttonShowPaired;
     private ArduinoBluetoothClient m_client;
@@ -68,13 +68,22 @@ public class Main extends AppCompatActivity {
         }
     }
 
-    public void showDeviceListClicked(View v) {
-        Intent showAddresses = new Intent(Main.this, DeviceList.class);
-        startActivity(showAddresses);
+    @Override
+    public void setErrorMessage(String message) {
+        Intent data = new Intent("Closed on Error");
+        data.putExtra(RESULTKEY_ERROR_MESSAGE, message);
+        setResult(RESULT_ERROR, data);
     }
 
-    private void showMessageBox(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_LONG).show();
+    @Override
+    public void finishWithError(String message) {
+        setErrorMessage(message);
+        finish();
+    }
+
+    @Override
+    public void showActivityError(Intent errorMessage) {
+        Toast.makeText(this, errorMessage.getStringExtra(RESULTKEY_ERROR_MESSAGE), Toast.LENGTH_SHORT).show();
     }
 
     /**
@@ -115,12 +124,36 @@ public class Main extends AppCompatActivity {
         switch (item.getItemId()) {
             case (R.id.main_actionbar_menu_item_settings): {
                 Intent startSettings = new Intent(this, SettingsActivity.class);
-                startActivity(startSettings);
+                startActivityForResult(startSettings, SettingsActivity.REQUEST_CODE);
                 return true;
             }
             default:
                 return super.onOptionsItemSelected(item);
 
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case (DeviceList.REQUEST_CODE): {
+                if (resultCode == DeviceList.RESULT_ERROR) {
+                    showActivityError(data);
+                }
+                break;
+            }
+            case (SettingsActivity.REQUEST_CODE): {
+                if (resultCode == SettingsActivity.RESULT_ERROR) {
+                    showActivityError(data);
+                }
+                break;
+            }
+        }
+    }
+
+    public void showDeviceListClicked(View v) {
+        Intent showAddresses = new Intent(Main.this, DeviceList.class);
+        startActivityForResult(showAddresses, DeviceList.REQUEST_CODE);
     }
 }
