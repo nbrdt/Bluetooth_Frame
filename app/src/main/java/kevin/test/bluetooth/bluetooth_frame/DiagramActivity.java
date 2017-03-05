@@ -427,7 +427,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         public Fragment getItem(int position) {
             DiagramFragment fragment = DiagramFragment.newInstance(positionToSectionNumber(position), m_viewSettings);
             fragment.setRefresher(DiagramActivity.this);
-            if (position < fragments.size()) {
+            if (position < fragments.size() || fragments.size() < PAGE_NUMBER) {
                 if (fragments.get(position) != null) {
                     fragments.set(position, fragment);
                 } else {
