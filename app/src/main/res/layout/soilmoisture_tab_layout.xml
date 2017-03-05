@@ -3,10 +3,10 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/layout">
+    android:id="@+id/soilmoisture_layout">
 
     <com.github.mikephil.charting.charts.LineChart
-        android:id="@+id/line_chart"
+        android:id="@+id/soilmoisture_line_chart"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 </LinearLayout>

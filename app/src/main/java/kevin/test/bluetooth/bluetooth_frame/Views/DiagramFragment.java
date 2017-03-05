@@ -5,12 +5,20 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 
 import kevin.test.bluetooth.bluetooth_frame.R;
 
@@ -20,15 +28,22 @@ import kevin.test.bluetooth.bluetooth_frame.R;
  * A fragment containing the Diagram. When clicking on one tab, the correct Diagram is put into the fragment
  */
 public class DiagramFragment extends Fragment {
+    public static final String DIAGRAM_NAME_TEMP = "Temperature";
+    public static final int DIAGRAM_SECTIONNUMBER_TEMP = 1;
+    public static final String DIAGRAM_NAME_HUMID = "Humidity";
+    public static final int DIAGRAM_SECTIONNUMBER_HUMID = 2;
+    public static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
+    public static final int DIAGRAM_SECTIONNUMBER_SOIL = 3;
+    private static final String LOG_TAG = "Diagram Fragment";
 
     private DiagramViewSettings viewSettings;
     private int sectionNumber;
     private RefreshListener refresher;
 
-    private DiagrammAllgemein shownDiagram;
+    private LineChart shownDiagram;
     LinearLayout layout;
 
-    private ArrayList<Integer> values;
+    private ArrayList<Entry> values;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_VIEWSETTINGS = "view_settings";
@@ -75,12 +90,34 @@ public class DiagramFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        final View rootView = inflater.inflate(R.layout.tab_layout, container, false);
-        layout = (LinearLayout) rootView.findViewById(R.id.layout);
+
         Bundle args = getArguments();
         sectionNumber = args.getInt(ARG_SECTION_NUMBER);
         viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(ARG_VIEWSETTINGS));
-        final int diagramToShow = sectionNumber - 1;
+        final View rootView;
+        switch (getSectionNumber()) {
+            case (DIAGRAM_SECTIONNUMBER_HUMID): {
+                rootView = inflater.inflate(R.layout.humidity_tab_layout, container, false);
+                layout = (LinearLayout) rootView.findViewById(R.id.humidity_layout);
+                break;
+            }
+            case (DIAGRAM_SECTIONNUMBER_SOIL): {
+                rootView = inflater.inflate(R.layout.soilmoisture_tab_layout, container, false);
+                layout = (LinearLayout) rootView.findViewById(R.id.soilmoisture_layout);
+                break;
+            }
+            case (DIAGRAM_SECTIONNUMBER_TEMP): {
+                rootView = inflater.inflate(R.layout.temperature_tab_layout, container, false);
+                layout = (LinearLayout) rootView.findViewById(R.id.temperature_layout);
+                break;
+            }
+            default: {
+                Log.w(LOG_TAG, "Could not identify Section number. Using Default Temperature Layout");
+                rootView = inflater.inflate(R.layout.temperature_tab_layout, container, false);
+                layout = (LinearLayout) rootView.findViewById(R.id.temperature_layout);
+                break;
+            }
+        }
 
         //Is necessary to get the height and width of the layout
         layout.post(new Runnable() {
@@ -92,35 +129,29 @@ public class DiagramFragment extends Fragment {
 
                 int width = layoutWidth;
                 int height = (int) Math.round(layoutWidth * 0.6);
-
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(width, height);
-
-                shownDiagram = null;
-                Bundle args = getArguments();
-
-
-                switch (diagramToShow) {
-                    case 0: {
-                        shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
+                switch (getSectionNumber()) {
+                    case (DIAGRAM_SECTIONNUMBER_HUMID): {
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.humidity_line_chart);
                         break;
                     }
-                    case 1: {
-                        shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 0, 100, "%", viewSettings);
+                    case (DIAGRAM_SECTIONNUMBER_SOIL): {
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.soilmoisture_line_chart);
                         break;
                     }
-                    case 2: {
-                        shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), 20, 80, "%", viewSettings);
+                    case (DIAGRAM_SECTIONNUMBER_TEMP): {
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);
                         break;
                     }
                     default: {
-                        shownDiagram = new DiagrammAllgemein(getContext(), height, width, new ArrayList<Integer>(), -25, 100, "°C", viewSettings);
+                        Log.w(LOG_TAG, "Could not identify Section number. Using Temperature Line chart.");
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);
+                        break;
                     }
                 }
-
-                shownDiagram.setDiagramFragment(DiagramFragment.this);
                 shownDiagram.setBackgroundColor(Color.WHITE);
-                shownDiagram.setLayoutParams(params);
-                layout.addView(shownDiagram);
+                shownDiagram.setDragDecelerationEnabled(false);
+                shownDiagram.setLogEnabled(false);
+                updateDiagram();
             }
         });
 
@@ -131,14 +162,15 @@ public class DiagramFragment extends Fragment {
     }
 
 
-    public void resetValues(ArrayList<Integer> newValues) {
+    public void resetValues(ArrayList<Entry> newValues) {
         values = newValues;
     }
 
     public void updateDiagram() {
         if (shownDiagram != null) {
             refresher.onRefreshRequest(this);
-            shownDiagram.updateList(values);
+            shownDiagram.setData(createDataFromValues());
+            //shownDiagram.notifyDataSetChanged();
             Handler refresher = new Handler(Looper.getMainLooper());
             refresher.post(new Runnable() {
                 @Override
@@ -152,16 +184,66 @@ public class DiagramFragment extends Fragment {
     public void setViewSettings(DiagramViewSettings settings) {
         this.viewSettings = settings;
         if (shownDiagram != null) {
-            shownDiagram.setViewSettings(viewSettings);
             updateDiagram();
         }
     }
 
     public int getSectionNumber() {
-        return sectionNumber;
+        if (getArguments() != null) {
+            sectionNumber = getArguments().getInt(ARG_SECTION_NUMBER);  //somehow the ebugger shows us, that the class variables showed in tabs are mixed sometimes...
+            return sectionNumber;
+        } else {
+            Log.w(LOG_TAG, "Arguments could not be read, using class variable");
+            return sectionNumber;
+        }
     }
 
     public interface RefreshListener {
         public void onRefreshRequest(DiagramFragment requester);
+    }
+
+    private LineData createDataFromValues() {
+        if (values.isEmpty()) {
+            values.add(new Entry(0f, 0f));
+        }
+        LineDataSet dataSet = new LineDataSet(copyValues(), getDataName());
+        dataSet.setColor(viewSettings.getGraphColor());
+        LineData data = new LineData(dataSet);
+        return data;
+    }
+
+    private String getDataName() {
+        switch (getSectionNumber()) {
+            case DIAGRAM_SECTIONNUMBER_SOIL: {
+                return DIAGRAM_NAME_SOIL + " in %";
+            }
+            case DIAGRAM_SECTIONNUMBER_HUMID: {
+                return DIAGRAM_NAME_HUMID + " in %";
+            }
+            case DIAGRAM_SECTIONNUMBER_TEMP: {
+                return DIAGRAM_NAME_TEMP + " in °C";
+            }
+            default: {
+                Log.w(LOG_TAG, "Could not identify Section number. Using Temperature Data Name");
+                return DIAGRAM_NAME_TEMP + " in °C";
+            }
+        }
+    }
+
+    private List<Entry> copyValues() {
+        ArrayList<Entry> copy = new ArrayList<>(values.size());
+        for (Entry e :
+                values) {
+            copy.add(e);
+        }
+        return copy;
+    }
+
+    public static int sectionNumberToPosition(int sectionNumber) {
+        return sectionNumber - 1;
+    }
+
+    public static int positionToSectionNumber(int position) {
+        return position + 1;
     }
 }
