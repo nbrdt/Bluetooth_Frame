@@ -15,7 +15,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.ConcurrentModificationException;
 import java.util.Date;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Vector;
 
@@ -111,7 +110,7 @@ public class BluetoothDataProvider {
                 m_FileWriter.println(INDICATOR_SETSEPARATOR);
                 writeDate(INDICATOR_TIME, data.getTimeStamp());
                 writeValue(INDICATOR_TEMP, data.getTemperature());
-                writeValue(INDICATOR_HUMID, data.getHumidity());
+                writeValue(INDICATOR_HUMID, data.getRainStrength());
                 writeValue(INDICATOR_SOIL, data.getSoilMoisture());
             }
         } catch (ConcurrentModificationException e) { //some Devices (Only one so far) get This Exception because of the List iterator)
@@ -120,7 +119,7 @@ public class BluetoothDataProvider {
                 m_FileWriter.println(INDICATOR_SETSEPARATOR);
                 writeDate(INDICATOR_TIME, data.getTimeStamp());
                 writeValue(INDICATOR_TEMP, data.getTemperature());
-                writeValue(INDICATOR_HUMID, data.getHumidity());
+                writeValue(INDICATOR_HUMID, data.getRainStrength());
                 writeValue(INDICATOR_SOIL, data.getSoilMoisture());
             }
         }
@@ -157,7 +156,7 @@ public class BluetoothDataProvider {
             m_FileWriter.println("####");
             writeDateToEnd(INDICATOR_TIME, data.getTimeStamp());
             writeValueToEnd(INDICATOR_TEMP, data.getTemperature());
-            writeValueToEnd(INDICATOR_HUMID, data.getHumidity());
+            writeValueToEnd(INDICATOR_HUMID, data.getRainStrength());
             writeValueToEnd(INDICATOR_SOIL, data.getSoilMoisture());
         }
         if (!leaveOutputStreamOpen) {

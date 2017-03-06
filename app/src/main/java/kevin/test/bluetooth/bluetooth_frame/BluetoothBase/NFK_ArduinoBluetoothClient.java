@@ -1,5 +1,6 @@
 package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
 
+import android.support.annotation.Nullable;
 import android.util.Log;
 
 import java.io.BufferedReader;
@@ -69,7 +70,9 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
      * @throws ArduinoProtocolException if an much too high amount of numbers had to be overread and an connection to the wrong device is suspected.
      */
     @Override
-    public List<BluetoothDataSet> getReceivedData() {
+    public
+    @Nullable
+    List<BluetoothDataSet> getReceivedData() {
         if (((double) m_falseProtocolSinceClear / m_readSinceClear) >= ((double) 0.8)) {
             throw new ArduinoProtocolException("Giant number of misreads - wrong device connected", m_falseProtocolSinceClear, m_readSinceClear);
         }
@@ -201,13 +204,13 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     private class ArduinoDecoder extends TimerTask {
         private List<BigDecimal> pm_Temps;
-        private List<BigDecimal> pm_Humids;
+        private List<BigDecimal> pm_Rains;
         private List<BigDecimal> pm_Mois;
 
         public ArduinoDecoder() {
             super();
             pm_Temps = new LinkedList<BigDecimal>();
-            pm_Humids = new LinkedList<BigDecimal>();
+            pm_Rains = new LinkedList<BigDecimal>();
             pm_Mois = new LinkedList<BigDecimal>();
         }
 
@@ -223,13 +226,13 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     if (m_receiveListener != null) m_receiveListener.onPreReceive();
                     recognizeArduinoSend(bufferedInput,received);
                     if (pm_Temps.size() >0 &&
-                        pm_Humids.size()>0 &&
+                            pm_Rains.size() > 0 &&
                         pm_Mois.size()  >0 ) {
                         BigDecimal temperature = calculateMedian(pm_Temps,"Temperature");
-                        BigDecimal humidity = calculateMedian(pm_Humids, "Humidity");
+                        BigDecimal rainStrength = calculateMedian(pm_Rains, "Rain strength");
                         BigDecimal soilMoisture = calculateMedian(pm_Mois,"Soil Moisture");
                         Date time = Calendar.getInstance().getTime();
-                        BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, humidity, soilMoisture);
+                        BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture);
                         m_receivedData.add(toAdd);
                         clearLists();
                         if (m_receiveListener != null) m_receiveListener.onPostReceive();
@@ -238,7 +241,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             } catch (IOException e) {
                 Log.e(LOG_TAG, "unable to read", e);
             } catch (ArrayIndexOutOfBoundsException e) {
-                Log.e(LOG_TAG, "Too much Data... had to dump received Data", e);
+                Log.e(LOG_TAG, "Too much Data... had to dump received Data", e);  //he sometimes gets this Exception when trying to read into an too small buffer
             }
         }
 
@@ -246,7 +249,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             for (Integer i = 0; ((i + 1) < received) && ((i + 1) < bufferedInput.length); i++) {
                 boolean read = false;
                 switch (bufferedInput[i]) {
-                    case (BluetoothDataSet.ARDUINO_INDICATOR_HUMIDITY): {  // notices a Humidity Indicator -> next has to be corresponding value
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Humidity Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
@@ -254,7 +257,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 builder.append(bufferedInput[j+1]);
                                 i++;
                             }
-                            addStringToList(pm_Humids,builder.toString());
+                            addStringToList(pm_Mois, builder.toString());
                             read = true;
                             i++; // Increments so that he can read the next set of two
                         }
@@ -280,7 +283,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         }
                         break;
                     }
-                    case (BluetoothDataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_RAINING): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
                         if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
@@ -288,7 +291,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                                 builder.append(bufferedInput[j+1]);
                                 i++;
                             }
-                            addStringToList(pm_Mois, builder.toString());
+                            addStringToList(pm_Rains, builder.toString());
                             read = true;
                             i++; // Increments so that he can read the next set of two
                         }
@@ -329,7 +332,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
         private void clearLists() {
             pm_Mois.clear();
-            pm_Humids.clear();
+            pm_Rains.clear();
             pm_Temps.clear();
         }
 
@@ -357,11 +360,9 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
          */
         @Override
         public boolean cancel() {
-            pm_Temps.clear();
-            pm_Mois.clear();
-            pm_Humids.clear();
+            clearLists();
             pm_Temps = null;
-            pm_Humids = null;
+            pm_Rains = null;
             pm_Mois = null;
             return super.cancel();
         }

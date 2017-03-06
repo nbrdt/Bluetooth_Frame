@@ -18,6 +18,7 @@ public class ArduinoProtocolException extends RuntimeException {
     public ArduinoProtocolException(String message, Throwable cause) {
         super(message, cause);
     }
+
     public double getFalseMessages() {
         return falseMessages;
     }

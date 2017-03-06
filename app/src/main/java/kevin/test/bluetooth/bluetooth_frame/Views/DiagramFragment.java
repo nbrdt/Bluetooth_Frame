@@ -11,14 +11,20 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import java.math.BigDecimal;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.formatter.IValueFormatter;
+import com.github.mikephil.charting.utils.ViewPortHandler;
 
 import kevin.test.bluetooth.bluetooth_frame.R;
 
@@ -30,10 +36,10 @@ import kevin.test.bluetooth.bluetooth_frame.R;
 public class DiagramFragment extends Fragment {
     public static final String DIAGRAM_NAME_TEMP = "Temperature";
     public static final int DIAGRAM_SECTIONNUMBER_TEMP = 1;
-    public static final String DIAGRAM_NAME_HUMID = "Humidity";
-    public static final int DIAGRAM_SECTIONNUMBER_HUMID = 2;
     public static final String DIAGRAM_NAME_SOIL = "Soil Moisture";
-    public static final int DIAGRAM_SECTIONNUMBER_SOIL = 3;
+    public static final int DIAGRAM_SECTIONNUMBER_SOIL = 2;
+    public static final String DIAGRAM_NAME_RAIN = "Rain Strength";
+    public static final int DIAGRAM_SECTIONNUMBER_RAIN = 3;
     private static final String LOG_TAG = "Diagram Fragment";
 
     private DiagramViewSettings viewSettings;
@@ -43,10 +49,18 @@ public class DiagramFragment extends Fragment {
     private LineChart shownDiagram;
     LinearLayout layout;
 
-    private ArrayList<Entry> values;
+    private LinkedList<Entry> values;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_VIEWSETTINGS = "view_settings";
+    private TimeFormat timeFormat = TimeFormat.SECONDS;
+
+    public enum TimeFormat {
+        SECONDS,
+        MINUTES,
+        HOURS,
+        DAYS
+    }
 
     public DiagramFragment() {
     }
@@ -96,12 +110,12 @@ public class DiagramFragment extends Fragment {
         viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(ARG_VIEWSETTINGS));
         final View rootView;
         switch (getSectionNumber()) {
-            case (DIAGRAM_SECTIONNUMBER_HUMID): {
+            case (DIAGRAM_SECTIONNUMBER_SOIL): {
                 rootView = inflater.inflate(R.layout.humidity_tab_layout, container, false);
                 layout = (LinearLayout) rootView.findViewById(R.id.humidity_layout);
                 break;
             }
-            case (DIAGRAM_SECTIONNUMBER_SOIL): {
+            case (DIAGRAM_SECTIONNUMBER_RAIN): {
                 rootView = inflater.inflate(R.layout.soilmoisture_tab_layout, container, false);
                 layout = (LinearLayout) rootView.findViewById(R.id.soilmoisture_layout);
                 break;
@@ -130,11 +144,11 @@ public class DiagramFragment extends Fragment {
                 int width = layoutWidth;
                 int height = (int) Math.round(layoutWidth * 0.6);
                 switch (getSectionNumber()) {
-                    case (DIAGRAM_SECTIONNUMBER_HUMID): {
+                    case (DIAGRAM_SECTIONNUMBER_SOIL): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.humidity_line_chart);
                         break;
                     }
-                    case (DIAGRAM_SECTIONNUMBER_SOIL): {
+                    case (DIAGRAM_SECTIONNUMBER_RAIN): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.soilmoisture_line_chart);
                         break;
                     }
@@ -151,6 +165,7 @@ public class DiagramFragment extends Fragment {
                 shownDiagram.setBackgroundColor(Color.WHITE);
                 shownDiagram.setDragDecelerationEnabled(false);
                 shownDiagram.setLogEnabled(false);
+                shownDiagram.getXAxis().setValueFormatter(new TimeValueFormatter());
                 updateDiagram();
             }
         });
@@ -162,8 +177,13 @@ public class DiagramFragment extends Fragment {
     }
 
 
-    public void resetValues(ArrayList<Entry> newValues) {
+    public void resetValues(LinkedList<Entry> newValues) {
         values = newValues;
+    }
+
+    public void resetFormat(BigDecimal maxValue) {
+        TimeValueFormatter formatter = new TimeValueFormatter();
+        this.timeFormat = formatter.chooseFormat(maxValue.floatValue());
     }
 
     public void updateDiagram() {
@@ -204,21 +224,23 @@ public class DiagramFragment extends Fragment {
 
     private LineData createDataFromValues() {
         if (values.isEmpty()) {
-            values.add(new Entry(0f, 0f));
+            return null;
+        } else {
+            LineDataSet dataSet = new LineDataSet(copyValues(), getDataName());
+            dataSet.setColor(viewSettings.getGraphColor());
+            LineData data = new LineData(dataSet);
+            data.setValueFormatter(new ValueFormatter());
+            return data;
         }
-        LineDataSet dataSet = new LineDataSet(copyValues(), getDataName());
-        dataSet.setColor(viewSettings.getGraphColor());
-        LineData data = new LineData(dataSet);
-        return data;
     }
 
     private String getDataName() {
         switch (getSectionNumber()) {
+            case DIAGRAM_SECTIONNUMBER_RAIN: {
+                return DIAGRAM_NAME_RAIN + " in %";
+            }
             case DIAGRAM_SECTIONNUMBER_SOIL: {
                 return DIAGRAM_NAME_SOIL + " in %";
-            }
-            case DIAGRAM_SECTIONNUMBER_HUMID: {
-                return DIAGRAM_NAME_HUMID + " in %";
             }
             case DIAGRAM_SECTIONNUMBER_TEMP: {
                 return DIAGRAM_NAME_TEMP + " in °C";
@@ -245,5 +267,78 @@ public class DiagramFragment extends Fragment {
 
     public static int positionToSectionNumber(int position) {
         return position + 1;
+    }
+
+    private class ValueFormatter implements IValueFormatter {
+        ValueFormatter() {
+        }
+
+        @Override
+        public String getFormattedValue(float value, Entry entry, int dataSetIndex, ViewPortHandler viewPortHandler) {
+            DecimalFormat formatter = (DecimalFormat) DecimalFormat.getInstance();
+            return formatter.format(value);
+        }
+    }
+
+    private class TimeValueFormatter implements IAxisValueFormatter {
+        private static final int SECONDS_TO_MINUTES = 60;
+        private static final int SECONDS_TO_HOURS = 3600;
+        private static final int SECONDS_TO_DAYS = 86400;
+
+        TimeValueFormatter() {
+        }
+
+        public TimeFormat chooseFormat(float valueInMs) {
+            float value = valueInMs / 1000;  //formats into seconds
+            if (value < SECONDS_TO_MINUTES * 2) {
+                return TimeFormat.SECONDS;
+            } else if (value < SECONDS_TO_HOURS * 2) {
+                return TimeFormat.MINUTES;
+            } else if (value < SECONDS_TO_DAYS * 2) {
+                return TimeFormat.HOURS;
+            } else {
+                return TimeFormat.DAYS;
+            }
+        }
+
+        @Override
+        public String getFormattedValue(float value, AxisBase axis) {
+            axis.setAxisMinimum(0f);
+            axis.setGridColor(viewSettings.getFrameColor());
+            DecimalFormat formatter = (DecimalFormat) DecimalFormat.getInstance();
+            formatter.setMaximumFractionDigits(1);
+            value = value / 1000; //formats into Seconds
+            StringBuilder formatted = new StringBuilder();
+            switch (timeFormat) {
+                case SECONDS: {
+                    formatted.append(formatter.format(value));
+                    formatted.append("s");
+                    break;
+                }
+                case MINUTES: {
+                    formatted.append(formatter.format(value / SECONDS_TO_MINUTES));
+                    formatted.append("min");
+                    break;
+                }
+                case HOURS: {
+                    formatted.append(formatter.format(value / SECONDS_TO_HOURS));
+                    formatted.append("h");
+                    break;
+                }
+                case DAYS: {
+                    formatter.setMaximumFractionDigits(2);
+                    formatted.append(formatter.format(value / SECONDS_TO_DAYS));
+                    formatted.append("d");
+                    break;
+                }
+                default: {  //the default formats Seconds
+                    Log.w(LOG_TAG, "Unknown timeFormat is used to Format an Axis. Using Seconds");
+                    formatted.append(formatter.format(value / 60));
+                    formatted.append("s");
+                }
+            }
+            return formatted.toString();
+        }
+
     }
 }

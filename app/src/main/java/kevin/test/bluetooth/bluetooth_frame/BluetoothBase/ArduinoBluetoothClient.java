@@ -8,6 +8,9 @@ package kevin.test.bluetooth.bluetooth_frame.BluetoothBase;
  *@author KI
  *@version 1.0
  **/
+
+import android.support.annotation.Nullable;
+
 import java.util.List;
 
 public interface ArduinoBluetoothClient extends BluetoothClient {
@@ -19,7 +22,9 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
    *
    * @return List of BluetoothDataSet which represents the received Data, in case of no received Data, this will return a null Object reference
    **/
-  public List<BluetoothDataSet> getReceivedData();
+  public
+  @Nullable
+  List<BluetoothDataSet> getReceivedData();
 
   /**
    * Clears the internal representation of the receivedData List.

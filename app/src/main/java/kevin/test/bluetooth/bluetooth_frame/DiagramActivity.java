@@ -6,6 +6,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -67,9 +68,9 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     private int m_viewedPosition;
 
     private Vector<BluetoothDataSet> m_bluetoothData = new Vector<>();
-    private ArrayList<Entry> m_temperatureValues = new ArrayList<>();
-    private ArrayList<Entry> m_humidityValues = new ArrayList<>();
-    private ArrayList<Entry> m_soilValues = new ArrayList<>();
+    private LinkedList<Entry> m_temperatureValues = new LinkedList<>();
+    private LinkedList<Entry> m_soilValues = new LinkedList<>();
+    private LinkedList<Entry> m_rainValues = new LinkedList<>();
 
     private NonSwipableViewPager mViewPager;
 
@@ -117,7 +118,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(DiagramActivity.this);
             try {
-                m_client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")));
+                m_client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")), 2000);
             } catch (NumberFormatException e) {
                 finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
             }
@@ -241,14 +242,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         int sectionNumber = requester.getSectionNumber();
         String title = mSectionsPagerAdapter.getPageTitle(sectionNumberToPosition(sectionNumber)).toString();
         switch (title) {
-            case (DiagramFragment.DIAGRAM_NAME_SOIL): {
-                Log.d(LOG_TAG, "Setting Soil values on position: " + m_viewedPosition);
-                requester.resetValues(m_soilValues);
+            case (DiagramFragment.DIAGRAM_NAME_RAIN): {
+                Log.d(LOG_TAG, "Setting Rain Strength values on position: " + m_viewedPosition);
+                requester.resetValues(m_rainValues);
                 break;
             }
-            case (DiagramFragment.DIAGRAM_NAME_HUMID): {
-                Log.d(LOG_TAG, "Setting Humidity values on position: " + m_viewedPosition);
-                requester.resetValues(m_humidityValues);
+            case (DiagramFragment.DIAGRAM_NAME_SOIL): {
+                Log.d(LOG_TAG, "Setting Soil Moisture values on position: " + m_viewedPosition);
+                requester.resetValues(m_soilValues);
                 break;
             }
             default: {
@@ -268,7 +269,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     public void onPageSelected(int position) {  //This is called, whenever a new Page is shown-> Fragment needs to load data
         m_viewedPosition = position;
         DiagramFragment fragment = mSectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
-        if (sectionNumberToPosition(fragment.getSectionNumber()) != position) {
+        if (fragment != null && sectionNumberToPosition(fragment.getSectionNumber()) != position) {
             Log.w(LOG_TAG, "Fragment and Position don't match");  //just for debugging purposes
         }
         updateFragment();
@@ -298,8 +299,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
     }
 
     private void updateFragment() {
-        DiagramFragment fragment = mSectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
+        final DiagramFragment fragment = mSectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
         if (fragment != null) {
+            /*Handler refresher = new Handler(Looper.getMainLooper());  //makes this Thread safe, by posting it on the main Thread
+            refresher.post(new Runnable() {
+                @Override
+                public void run() {
+                }
+            });*/
             fragment.updateDiagram();
         } else {
             Log.w(LOG_TAG, "Could not update Diagram Fragment, because Fragment is not available");
@@ -327,27 +334,26 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         }
     }
 
-    private void addEntries(@NonNull List<BluetoothDataSet> dataSets, long maxBack) {
-        prepareLists(dataSets.size());
-        for (BluetoothDataSet data :  //adding everything to the Lists
-                dataSets) {
-            BigDecimal xValue = new BigDecimal(data.getTimeStamp().getTime());
-            xValue = xValue.subtract(new BigDecimal(maxBack));
-            xValue = xValue.divide(new BigDecimal(1000)); //so that the Milliseconds are formatted into Seconds
-            m_temperatureValues.add(new Entry(xValue.floatValue(), data.getTemperature().floatValue()));
-            m_humidityValues.add(new Entry(xValue.floatValue(), data.getHumidity().floatValue()));
-            m_soilValues.add(new Entry(xValue.floatValue(), data.getSoilMoisture().floatValue()));
-        }
-    }
-
     private void addEntries(@NonNull List<BluetoothDataSet> dataSets) {
-        long maxBack;
+        prepareLists(dataSets.size());
         if (!dataSets.isEmpty()) {
-            maxBack = dataSets.get(0).getTimeStamp().getTime();
-        } else {
-            maxBack = 0;
+            BigDecimal xEntryMin = new BigDecimal(dataSets.get(0).getTimeStamp().getTime()); //gets The Minimum XValue
+            BigDecimal xEntryMax = new BigDecimal(dataSets.get(dataSets.size() - 1).getTimeStamp().getTime());  //gets The Maximum XValue
+            BigDecimal xEntryRange = xEntryMax.subtract(xEntryMin);  //gets The Range in between which is needed to invert The Axis
+            DiagramFragment fragment = mSectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
+            if (fragment != null) {
+                fragment.resetFormat(xEntryRange);  //xEntryRange supplies the MaxValue...
+            }
+            for (BluetoothDataSet data :  //adding everything to the Lists
+                    dataSets) {
+                BigDecimal xValue = (new BigDecimal(data.getTimeStamp().getTime())).subtract(xEntryMin);
+                xValue = xValue.multiply(new BigDecimal(-1)); //versetzt die Werte unter das minimum
+                xValue = xValue.add(xEntryRange);   //versetzt sie wieder um den maximal Abstand nach oben
+                m_temperatureValues.addFirst(new Entry(xValue.floatValue(), data.getTemperature().floatValue()));
+                m_soilValues.addFirst(new Entry(xValue.floatValue(), data.getRainStrength().floatValue()));
+                m_rainValues.addFirst(new Entry(xValue.floatValue(), data.getSoilMoisture().floatValue()));
+            }
         }
-        addEntries(dataSets, maxBack);
     }
 
     private void refreshData() {
@@ -365,15 +371,15 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         if (m_temperatureValues != null) {
             m_temperatureValues.clear();
         }
-        if (m_humidityValues != null) {
-            m_humidityValues.clear();
-        }
         if (m_soilValues != null) {
             m_soilValues.clear();
         }
-        m_temperatureValues = new ArrayList<>(size);
-        m_humidityValues = new ArrayList<>(size);
-        m_soilValues = new ArrayList<>(size);
+        if (m_rainValues != null) {
+            m_rainValues.clear();
+        }
+        m_temperatureValues = new LinkedList<>();
+        m_soilValues = new LinkedList<>();
+        m_rainValues = new LinkedList<>();
     }
 
     private void reloadSettings() {
@@ -391,7 +397,7 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
                     m_client.setTimer(timerRate);
                 }
             } catch (NumberFormatException e) {
-                finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
+                finishWithError("Could not resolve receive Rate. Enter only Numbers in the Settings");
             }
         }
     }
@@ -402,7 +408,13 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
         if (m_viewSettings == null) {
             m_viewSettings = DiagramViewSettings.getDefaultSettings();
         }
-        int graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
+        int graphColor;
+        try {
+            graphColor = Integer.parseInt(preference.getString(SettingsActivity.KEY_VIEW_GRAPHCOLOR, SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR));
+        } catch (NumberFormatException e) {
+            graphColor = Integer.parseInt(SettingsActivity.PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR);
+            finishWithError("Could not Read Graph Settings. Try resetting Graph Settings or contact Developers.");
+        }
         if (graphColor != m_viewSettings.getGraphColor()) {
             m_viewSettings.setGraphColor(graphColor);
             if (fragment != null) fragment.setViewSettings(m_viewSettings);
@@ -420,14 +432,14 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
 
         SectionsPagerAdapter(FragmentManager fm) {
             super(fm);
-
         }
 
         @Override
         public Fragment getItem(int position) {
             DiagramFragment fragment = DiagramFragment.newInstance(positionToSectionNumber(position), m_viewSettings);
             fragment.setRefresher(DiagramActivity.this);
-            if (position < fragments.size() || fragments.size() < PAGE_NUMBER) {
+            if (position < fragments.size() &&
+                    PAGE_NUMBER <= fragments.size()) {
                 if (fragments.get(position) != null) {
                     fragments.set(position, fragment);
                 } else {
@@ -452,16 +464,29 @@ public class DiagramActivity extends AppCompatActivity implements ArduinoBluetoo
             switch (sectionNumber) {
                 case DiagramFragment.DIAGRAM_SECTIONNUMBER_TEMP:
                     return DiagramFragment.DIAGRAM_NAME_TEMP;
+                case DiagramFragment.DIAGRAM_SECTIONNUMBER_RAIN:
+                    return DiagramFragment.DIAGRAM_NAME_RAIN;
                 case DiagramFragment.DIAGRAM_SECTIONNUMBER_SOIL:
                     return DiagramFragment.DIAGRAM_NAME_SOIL;
-                case DiagramFragment.DIAGRAM_SECTIONNUMBER_HUMID:
-                    return DiagramFragment.DIAGRAM_NAME_HUMID;
             }
             return null;
         }
 
-        public DiagramFragment getSavedFragmentFromPosition(int position) {
-            return fragments.get(position);
+        /**
+         * Returns the fragment used at the given position.
+         * Will return null if the position does not poin to an given Fragment
+         *
+         * @param position the position (Tab) from which the Fragment should be retrieved
+         * @return The Fragment at the given position. Null, if there is no Fragment at the given position.
+         */
+        public
+        @Nullable
+        DiagramFragment getSavedFragmentFromPosition(int position) {
+            if (position >= 0 && position < fragments.size()) {
+                return fragments.get(position);
+            } else {
+                return null;
+            }
         }
     }
 }

@@ -9,18 +9,18 @@ import java.util.Date;
 public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Cloneable, BluetoothConstants {  //immutable object
     private final Date timeStamp;
     private final BigDecimal temperature;
-    private final BigDecimal humidity;
+    private final BigDecimal rainStrength;
     private final BigDecimal soilMoisture;
 
-    public static final char ARDUINO_INDICATOR_HUMIDITY = 'H';
     public static final char ARDUINO_INDICATOR_SOIL_MOISTURE = 'S';
+    public static final char ARDUINO_INDICATOR_RAINING = 'R';
     public static final char ARDUINO_INDICATOR_TEMPERATURE = 'T';
     public static final int  DATA_PRECISION = 10;
 
-    public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal humidity, BigDecimal soilMoisture) {
+    public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal rainStrength, BigDecimal soilMoisture) {
         this.timeStamp = timeStamp;
         this.temperature = temperature;
-        this.humidity = humidity;
+        this.rainStrength = rainStrength;
         this.soilMoisture = soilMoisture;
     }
 
@@ -81,7 +81,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
      */
     @Override
     protected BluetoothDataSet clone() {
-        return new BluetoothDataSet(timeStamp, temperature, humidity, soilMoisture);
+        return new BluetoothDataSet(timeStamp, temperature, rainStrength, soilMoisture);
     }
 
     /**
@@ -97,8 +97,8 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
         return temperature;
     }
 
-    public BigDecimal getHumidity() {
-        return humidity;
+    public BigDecimal getRainStrength() {
+        return rainStrength;
     }
 
     public BigDecimal getSoilMoisture() {
@@ -117,7 +117,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
         return "BluetoothDataSet{" +
                 "timeStamp=" + timeStamp.toString() +
                 ", temperature=" + temperature.toString() +
-                ", humidity=" + humidity.toString() +
+                ", rainStrength=" + rainStrength.toString() +
                 ", soilMoisture=" + soilMoisture.toString() +
                 '}';
     }
