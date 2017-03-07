@@ -2,6 +2,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="kevin.test.bluetooth.bluetooth_frame.Views.DiagramFragment">
+    tools:context="nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment">
 
 </FrameLayout>

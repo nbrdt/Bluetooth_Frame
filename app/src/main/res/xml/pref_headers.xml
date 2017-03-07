@@ -3,7 +3,7 @@
     <!-- These settings headers are only used on tablets. -->
 
     <header
-        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="nfk.bluetooth.arduino.wetterverarbeitung.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_data_title">
         <extra
             android:name="use"
@@ -11,7 +11,7 @@
     </header>
 
     <header
-        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="nfk.bluetooth.arduino.wetterverarbeitung.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_connection_title">
         <extra
             android:name="use"
@@ -19,7 +19,7 @@
     </header>
 
     <header
-        android:fragment="kevin.test.bluetooth.bluetooth_frame.SettingsActivity$GeneralPreferenceFragment"
+        android:fragment="nfk.bluetooth.arduino.wetterverarbeitung.SettingsActivity$GeneralPreferenceFragment"
         android:title="@string/pref_header_view_title">
         <extra
             android:name="use"

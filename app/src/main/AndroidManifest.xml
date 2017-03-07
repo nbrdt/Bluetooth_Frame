@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="kevin.test.bluetooth.bluetooth_frame">
+    package="nfk.bluetooth.arduino.wetterverarbeitung">
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
     <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
@@ -11,7 +11,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.AppCompat.Light.NoActionBar">
-        <activity android:name=".Main">
+        <activity android:name="nfk.bluetooth.arduino.wetterverarbeitung.Main">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,12 +19,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".Connected" />
-        <activity android:name=".DeviceList" />
+        <activity android:name="nfk.bluetooth.arduino.wetterverarbeitung.DeviceList" />
         <activity
-            android:name=".SettingsActivity"
+            android:name="nfk.bluetooth.arduino.wetterverarbeitung.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
-            android:name=".DiagramActivity"
+            android:name="nfk.bluetooth.arduino.wetterverarbeitung.DiagramActivity"
             android:label="@string/title_activity_diagram"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>

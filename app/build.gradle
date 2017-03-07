@@ -4,10 +4,10 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.2"
     defaultConfig {
-        applicationId "kevin.test.bluetooth.bluetooth_frame"
+        applicationId "nfk.bluetooth.arduino.wetterverarbeitung"
         minSdkVersion 16
         targetSdkVersion 25
-        versionCode 5
+        versionCode 6
         versionName "1.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

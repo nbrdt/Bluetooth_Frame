@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
-    tools:context="kevin.test.bluetooth.bluetooth_frame.DiagramActivity">
+    tools:context="nfk.bluetooth.arduino.wetterverarbeitung.DiagramActivity">
 
     <android.support.design.widget.AppBarLayout
         android:id="@+id/appbar"
@@ -32,7 +32,7 @@
 
     </android.support.design.widget.AppBarLayout>
 
-    <kevin.test.bluetooth.bluetooth_frame.Views.NonSwipableViewPager
+    <nfk.bluetooth.arduino.wetterverarbeitung.Views.NonSwipableViewPager
         android:id="@+id/diagramactivity_diagramcontainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

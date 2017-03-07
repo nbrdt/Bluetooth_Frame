@@ -1,7 +1,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="kevin.test.bluetooth.bluetooth_frame.DiagramActivity">
+    tools:context="nfk.bluetooth.arduino.wetterverarbeitung.DiagramActivity">
     <item
         android:title="Refresh"
         android:orderInCategory="101"
