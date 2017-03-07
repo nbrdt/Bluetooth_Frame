@@ -142,7 +142,7 @@ public class DiagramFragment extends Fragment {
                 final int layoutWidth = (int) touchWidth;
 
                 int width = layoutWidth;
-                int height = (int) Math.round(layoutWidth * 0.6);
+                int height = (int) Math.round(layoutWidth * 0.75);
                 switch (getSectionNumber()) {
                     case (DIAGRAM_SECTIONNUMBER_SOIL): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.humidity_line_chart);
@@ -284,11 +284,13 @@ public class DiagramFragment extends Fragment {
         private static final int SECONDS_TO_MINUTES = 60;
         private static final int SECONDS_TO_HOURS = 3600;
         private static final int SECONDS_TO_DAYS = 86400;
+        private DecimalFormat formatter;
 
         TimeValueFormatter() {
+            formatter = (DecimalFormat) DecimalFormat.getInstance();
         }
 
-        public TimeFormat chooseFormat(float valueInMs) {
+        TimeFormat chooseFormat(float valueInMs) {
             float value = valueInMs / 1000;  //formats into seconds
             if (value < SECONDS_TO_MINUTES * 2) {
                 return TimeFormat.SECONDS;
@@ -305,7 +307,6 @@ public class DiagramFragment extends Fragment {
         public String getFormattedValue(float value, AxisBase axis) {
             axis.setAxisMinimum(0f);
             axis.setGridColor(viewSettings.getFrameColor());
-            DecimalFormat formatter = (DecimalFormat) DecimalFormat.getInstance();
             formatter.setMaximumFractionDigits(1);
             value = value / 1000; //formats into Seconds
             StringBuilder formatted = new StringBuilder();
@@ -339,6 +340,7 @@ public class DiagramFragment extends Fragment {
             }
             return formatted.toString();
         }
+
 
     }
 }
