@@ -186,7 +186,7 @@ public class DiagramFragment extends Fragment {
         this.timeFormat = formatter.chooseFormat(maxValue.floatValue());
     }
 
-    public void updateDiagram() {
+    public void updateDiagram() {  //updates the Diagram view
         if (shownDiagram != null) {
             refresher.onRefreshRequest(this);
             shownDiagram.setData(createDataFromValues());
