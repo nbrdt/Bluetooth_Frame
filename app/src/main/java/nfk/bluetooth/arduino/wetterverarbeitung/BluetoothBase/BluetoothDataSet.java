@@ -3,6 +3,8 @@ package nfk.bluetooth.arduino.wetterverarbeitung.BluetoothBase;
   *@version 0.0 from 05.02.2017 in Bluetooth_Frame
  **/
 
+import android.support.annotation.NonNull;
+
 import java.math.BigDecimal;
 import java.util.Date;
 
@@ -19,12 +21,12 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
     public static final char ARDUINO_INDICATOR_LIGHT = 'L';
     public static final int  DATA_PRECISION = 10;
 
-    public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal rainStrength, BigDecimal soilMoisture) {
+    public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal rainStrength, BigDecimal soilMoisture, BigDecimal brightness) {
         this.timeStamp = timeStamp;
         this.temperature = temperature;
         this.rainStrength = rainStrength;
         this.soilMoisture = soilMoisture;
-        this.brightness = null;
+        this.brightness = brightness;
     }
 
     /**
@@ -84,7 +86,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
      */
     @Override
     protected BluetoothDataSet clone() {
-        return new BluetoothDataSet(timeStamp, temperature, rainStrength, soilMoisture);
+        return new BluetoothDataSet(timeStamp, temperature, rainStrength, soilMoisture, brightness);
     }
 
     /**
@@ -127,6 +129,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
                 ", temperature=" + temperature.toString() +
                 ", rainStrength=" + rainStrength.toString() +
                 ", soilMoisture=" + soilMoisture.toString() +
+                ", brightness=" + brightness.toString() +
                 '}';
     }
 
@@ -169,7 +172,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
      *                              from being compared to this object.
      */
     @Override
-    public int compareTo(BluetoothDataSet toCompare) {
+    public int compareTo(@NonNull BluetoothDataSet toCompare) {
         return this.getTimeStamp().compareTo(toCompare.getTimeStamp());
     }
 }

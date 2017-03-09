@@ -185,6 +185,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
                 m_temperatureValues.addFirst(new Entry(xValue.floatValue(), data.getTemperature().floatValue()));
                 m_soilValues.addFirst(new Entry(xValue.floatValue(), data.getRainStrength().floatValue()));
                 m_rainValues.addFirst(new Entry(xValue.floatValue(), data.getSoilMoisture().floatValue()));
+                m_lightValues.addFirst(new Entry(xValue.floatValue(), data.getBrightness().floatValue()));
             }
         }
     }

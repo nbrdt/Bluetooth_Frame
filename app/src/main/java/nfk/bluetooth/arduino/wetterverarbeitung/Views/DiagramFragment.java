@@ -256,7 +256,7 @@ public class DiagramFragment extends Fragment {
                 return DIAGRAM_NAME_SOIL + " in %";
             }
             case DIAGRAM_SECTIONNUMBER_LIGHT: {
-                return DIAGRAM_NAME_SOIL + " in LUX";
+                return DIAGRAM_NAME_LIGHT + " in LUX";
             }
             case DIAGRAM_SECTIONNUMBER_TEMP: {
                 return DIAGRAM_NAME_TEMP + " in °C";

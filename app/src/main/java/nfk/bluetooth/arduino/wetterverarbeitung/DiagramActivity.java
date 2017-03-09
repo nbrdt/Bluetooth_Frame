@@ -335,7 +335,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
      * one of the sections/tabs/pages.
      */
     class SectionsPagerAdapter extends FragmentPagerAdapter {
-        private static final int PAGE_NUMBER = 3;
+        private static final int PAGE_NUMBER = 4;
         private ArrayList<DiagramFragment> fragments = new ArrayList<>(PAGE_NUMBER);
 
         SectionsPagerAdapter(FragmentManager fm) {

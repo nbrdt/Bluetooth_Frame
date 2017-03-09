@@ -261,7 +261,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     BigDecimal soilMoisture = calculateMedian(pm_Mois, "Soil Moisture");
                     BigDecimal brightness = calculateMedian(pm_Light, "Brightness");
                     Date time = Calendar.getInstance().getTime();
-                    BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture);
+                    BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture, brightness);
                     m_receivedData.add(toAdd);
                     clearLists();
                     if (m_receiveListener != null) m_receiveListener.onPostReceive();

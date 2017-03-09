@@ -42,6 +42,7 @@ public class BluetoothDataProvider {
     private static final String INDICATOR_TEMP = "Temperature:";
     private static final String INDICATOR_HUMID = "Humidity:";
     private static final String INDICATOR_SOIL = "Soil Moisture:";
+    private static final String INDICATOR_LIGHT = "Brightness:";
 
     private static final String LOG_TAG = "Bluetooth-Data Provider";
 
@@ -77,7 +78,8 @@ public class BluetoothDataProvider {
                     BigDecimal temperature = readValue(INDICATOR_TEMP);
                     BigDecimal humidity = readValue(INDICATOR_HUMID);
                     BigDecimal soilMoisture = readValue(INDICATOR_SOIL);
-                    readData.add(new BluetoothDataSet(date, temperature, humidity, soilMoisture));
+                    BigDecimal brightness = readValue(INDICATOR_LIGHT);
+                    readData.add(new BluetoothDataSet(date, temperature, humidity, soilMoisture, brightness));
                 }
             } while (read != null);
         } catch (IOException e) {
@@ -104,7 +106,6 @@ public class BluetoothDataProvider {
             }
         }
         m_FileWriter.println("");
-        try {
             for (BluetoothDataSet data :
                     toWrite) {
                 m_FileWriter.println(INDICATOR_SETSEPARATOR);
@@ -112,17 +113,8 @@ public class BluetoothDataProvider {
                 writeValue(INDICATOR_TEMP, data.getTemperature());
                 writeValue(INDICATOR_HUMID, data.getRainStrength());
                 writeValue(INDICATOR_SOIL, data.getSoilMoisture());
+                writeValue(INDICATOR_LIGHT, data.getBrightness());
             }
-        } catch (ConcurrentModificationException e) { //some Devices (Only one so far) get This Exception because of the List iterator)
-            for (int i = 0; i < toWrite.size(); i++) {
-                BluetoothDataSet data = toWrite.get(i);
-                m_FileWriter.println(INDICATOR_SETSEPARATOR);
-                writeDate(INDICATOR_TIME, data.getTimeStamp());
-                writeValue(INDICATOR_TEMP, data.getTemperature());
-                writeValue(INDICATOR_HUMID, data.getRainStrength());
-                writeValue(INDICATOR_SOIL, data.getSoilMoisture());
-            }
-        }
         if (!leaveOutputStreamOpen) {
             m_FileWriter.close();
             m_FileWriter = null;
