@@ -29,8 +29,8 @@ import com.github.mikephil.charting.utils.ViewPortHandler;
 import nfk.bluetooth.arduino.wetterverarbeitung.R;
 
 /**
- * @author NB & KI
- * @version 1.3
+ * @author NB
+ * @version 1.4
  * A fragment containing the Diagram. When clicking on one tab, the correct Diagram is put into the fragment
  */
 public class DiagramFragment extends Fragment {
@@ -166,6 +166,7 @@ public class DiagramFragment extends Fragment {
                 shownDiagram.setDragDecelerationEnabled(false);
                 shownDiagram.setLogEnabled(false);
                 shownDiagram.getXAxis().setValueFormatter(new TimeValueFormatter());
+                shownDiagram.setNoDataText("No Received Data available yet");
                 updateDiagram();
             }
         });
@@ -269,6 +270,11 @@ public class DiagramFragment extends Fragment {
         return position + 1;
     }
 
+    /**
+     * Formats YAxis in another manner than the predefined way...
+     *
+     * @author KI&FW&NB
+     */
     private class ValueFormatter implements IValueFormatter {
         ValueFormatter() {
         }
@@ -280,6 +286,9 @@ public class DiagramFragment extends Fragment {
         }
     }
 
+    /** Formats XAxis values so that it displays the chosen TimeFormat
+     *  @author KI
+     */
     private class TimeValueFormatter implements IAxisValueFormatter {
         private static final int SECONDS_TO_MINUTES = 60;
         private static final int SECONDS_TO_HOURS = 3600;

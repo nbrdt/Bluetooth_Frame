@@ -39,6 +39,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Act
     public static final String PREF_DEFAULTVALUE_VIEW_GRAPHCOLOR = "-65536";
     public static final String KEY_DATA_DELETEONFINISH = "delete_on_finish";
     public static final String KEY_DATA_SHOWVALUES = "show_values";
+    public static final String PREF_DEFAULTVALUE_DATA_SHOWVALUES = "10000";
     public static final String KEY_CONNECTION_RECEIVERATE = "receive_data_rate";
     public static final String PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE = "1000";
 
