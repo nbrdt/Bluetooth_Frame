@@ -57,6 +57,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
     private int m_maxBack;
     private int m_viewedPosition;
     private DiagramHandler m_handler;
+    private int m_messageBufferSize;
 
 
 
@@ -110,6 +111,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
                 finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
             }
             reloadSettings();
+            m_client.setMessageBufferSize(m_messageBufferSize);
             HandlerThread handlerThread = new HandlerThread("Diagram Refresher");
             handlerThread.start();
             m_handler = new DiagramHandler(handlerThread, this, m_maxBack);
@@ -180,8 +182,18 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
     }
 
     @Override
+    protected void onPostResume() {
+        super.onPostResume();
+        updateFragment();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
+        SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor editor = preference.edit();
+        editor.putString(SettingsActivity.KEY_CONNECTION_BUFFERSIZE, "" + m_client.getMessageBufferSize());
+        editor.apply();
         if (m_client != null) {
             m_client.destroy();
         }
@@ -273,6 +285,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
 
     private void loadConnectionSettings() {
         SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        m_messageBufferSize = Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_BUFFERSIZE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_BUFFERSIZE));
         if (m_client != null) {
             long timerRate;
             try {

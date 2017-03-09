@@ -34,6 +34,9 @@ public interface ArduinoBluetoothClient extends BluetoothClient {
   **/
   public void clearReceivedData();
 
+  public void setMessageBufferSize(int newSize);
+
+  public int getMessageBufferSize();
 
   /**
    * Sets The Receiving Timer to the given scheduleRate.

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Bluetooth_Frame</string>
+    <string name="app_name">Wetterverarbeitung</string>
     <string name="button_connect_defaultText">Connect</string>
 
     <string name="menu_item_settings">Settings</string>

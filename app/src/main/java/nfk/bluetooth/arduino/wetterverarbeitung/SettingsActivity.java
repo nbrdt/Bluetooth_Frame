@@ -22,6 +22,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 
+import nfk.bluetooth.arduino.wetterverarbeitung.BluetoothBase.BluetoothConstants;
+
 /**
  * @author KI & Android Studio
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -42,6 +44,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Act
     public static final String PREF_DEFAULTVALUE_DATA_SHOWVALUES = "10000";
     public static final String KEY_CONNECTION_RECEIVERATE = "receive_data_rate";
     public static final String PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE = "1000";
+    public static final String KEY_CONNECTION_BUFFERSIZE = "message_buffer_size";
+    public static final String PREF_DEFAULTVALUE_CONNECTION_BUFFERSIZE = "" + BluetoothConstants.MESSAGE_BUFFER_SIZE;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

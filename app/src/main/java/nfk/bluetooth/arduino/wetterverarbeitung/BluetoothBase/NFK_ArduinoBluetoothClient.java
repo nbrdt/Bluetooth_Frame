@@ -27,6 +27,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     private Timer m_MessageTimer;
     private long m_ScheduleRate;
     private long m_TimerOffset;
+    private volatile int m_messageBufferSize;
     private volatile double m_falseProtocolSinceClear;
     private volatile double m_readSinceClear;
     private OnReceiveListener m_receiveListener;
@@ -41,6 +42,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         m_TimerOffset = timerOffset;
         m_falseProtocolSinceClear = 0;
         m_readSinceClear = 0;
+        m_messageBufferSize = MESSAGE_BUFFER_SIZE;
         resetTimer();
     }
 
@@ -62,6 +64,20 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     public static ArduinoBluetoothClient getClient() {
         return new NFK_ArduinoBluetoothClient();
+    }
+
+    @Override
+    public int getMessageBufferSize() {
+        return m_messageBufferSize;
+    }
+
+    @Override
+    public void setMessageBufferSize(int messageBufferSize) {
+        if (messageBufferSize > 0) {
+            this.m_messageBufferSize = messageBufferSize;
+        } else {
+            Log.w(LOG_TAG, "Tried to Assign a negative or zero Buffer Size. Array Buffer size has to be bigger than 0. Ignoring value.");
+        }
     }
 
     /**
@@ -219,47 +235,52 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
          */
         @Override
         public void run() {
-            char[] bufferedInput = new char[MESSAGE_BUFFER_SIZE];
+            char[] bufferedInput = new char[m_messageBufferSize];
+            int received;
             try {
-                int received = m_Reader.read(bufferedInput);  //reading input from the Bluetooth-Queue into the Buffer
-                if(received>0) {
-                    if (m_receiveListener != null) m_receiveListener.onPreReceive();
-                    recognizeArduinoSend(bufferedInput,received);
-                    if (pm_Temps.size() >0 &&
-                            pm_Rains.size() > 0 &&
-                        pm_Mois.size()  >0 ) {
-                        BigDecimal temperature = calculateMedian(pm_Temps,"Temperature");
-                        BigDecimal rainStrength = calculateMedian(pm_Rains, "Rain strength");
-                        BigDecimal soilMoisture = calculateMedian(pm_Mois,"Soil Moisture");
-                        Date time = Calendar.getInstance().getTime();
-                        BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture);
-                        m_receivedData.add(toAdd);
-                        clearLists();
-                        if (m_receiveListener != null) m_receiveListener.onPostReceive();
-                    }
-                }
+                received = m_Reader.read(bufferedInput);  //reading input from the Bluetooth-Queue into the Buffer
             } catch (IOException e) {
                 Log.e(LOG_TAG, "unable to read", e);
-            } catch (ArrayIndexOutOfBoundsException e) {
-                Log.e(LOG_TAG, "Too much Data... had to dump received Data", e);  //he sometimes gets this Exception when trying to read into an too small buffer
+                received = 0;
+            }
+            if (received > 0) {
+                if (received > m_messageBufferSize) {  //automatically increases the messageBuffer as necessary
+                    m_messageBufferSize += (received - m_messageBufferSize);
+                } else if (received == m_messageBufferSize) {
+                    m_messageBufferSize += 10;
+                }
+                if (m_receiveListener != null) m_receiveListener.onPreReceive();
+                recognizeArduinoSend(bufferedInput, received);
+                if (pm_Temps.size() > 0 &&
+                        pm_Rains.size() > 0 &&
+                        pm_Mois.size() > 0) {
+                    BigDecimal temperature = calculateMedian(pm_Temps, "Temperature");
+                    BigDecimal rainStrength = calculateMedian(pm_Rains, "Rain strength");
+                    BigDecimal soilMoisture = calculateMedian(pm_Mois, "Soil Moisture");
+                    Date time = Calendar.getInstance().getTime();
+                    BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture);
+                    m_receivedData.add(toAdd);
+                    clearLists();
+                    if (m_receiveListener != null) m_receiveListener.onPostReceive();
+                }
             }
         }
 
         private void recognizeArduinoSend (char[] bufferedInput, int received) {
-            for (Integer i = 0; ((i + 1) < received) && ((i + 1) < bufferedInput.length); i++) {
+            for (Integer i = 0; ((i + 1) < bufferedInput.length) && ((i + 1) < received); i++) {
                 boolean read = false;
                 switch (bufferedInput[i]) {
                     case (BluetoothDataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Humidity Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
-                        if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
+                        i++;
+                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
-                            for (int j = i; isDigit(bufferedInput[j + 1]) && (j + 1) < received && (j + 1) < bufferedInput.length; j++) {
-                                builder.append(bufferedInput[j+1]);
+                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
+                                builder.append(bufferedInput[j]);
                                 i++;
                             }
                             addStringToList(pm_Mois, builder.toString());
                             read = true;
-                            i++; // Increments so that he can read the next set of two
                         }
                         else {
                             Log.w(LOG_TAG,"Next Character isn't a number: "+Character.toString(bufferedInput[i+1])+" -> Ignoring Indicator.");
@@ -268,15 +289,15 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     }
                     case (BluetoothDataSet.ARDUINO_INDICATOR_TEMPERATURE): {  // notices a Temperature Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
-                        if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
+                        i++;
+                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
-                            for (int j=i;isDigit(bufferedInput[j+1]) && (j+1)<received && (j+1)<bufferedInput.length;j++) {
-                                builder.append(bufferedInput[j+1]);
+                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
+                                builder.append(bufferedInput[j]);
                                 i++;
                             }
                             addStringToList(pm_Temps, builder.toString());
                             read = true;
-                            i++;  // Increments so that he can read the next set of two
                         }
                         else {
                             Log.w(LOG_TAG,"Next Character isn't a number: "+Character.toString(bufferedInput[i+1])+" -> Ignoring Indicator.");
@@ -285,15 +306,15 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     }
                     case (BluetoothDataSet.ARDUINO_INDICATOR_RAINING): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
                         Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
-                        if (isDigit(bufferedInput[i+1])) {  // next might be a corresponding value -> adding
+                        i++;
+                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
                             StringBuilder builder = new StringBuilder();
-                            for (int j=i;isDigit(bufferedInput[j+1]) && (j+1)<received && (j+1)<bufferedInput.length;j++) {
-                                builder.append(bufferedInput[j+1]);
+                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
+                                builder.append(bufferedInput[j]);
                                 i++;
                             }
                             addStringToList(pm_Rains, builder.toString());
                             read = true;
-                            i++; // Increments so that he can read the next set of two
                         }
                         else {
                             Log.w(LOG_TAG,"Next Character isn't a number: "+Character.toString(bufferedInput[i+1])+" -> Ignoring Indicator.");
