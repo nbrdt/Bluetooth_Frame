@@ -11,10 +11,12 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
     private final BigDecimal temperature;
     private final BigDecimal rainStrength;
     private final BigDecimal soilMoisture;
+    private final BigDecimal brightness;
 
     public static final char ARDUINO_INDICATOR_SOIL_MOISTURE = 'S';
     public static final char ARDUINO_INDICATOR_RAINING = 'R';
     public static final char ARDUINO_INDICATOR_TEMPERATURE = 'T';
+    public static final char ARDUINO_INDICATOR_LIGHT = 'L';
     public static final int  DATA_PRECISION = 10;
 
     public BluetoothDataSet(Date timeStamp, BigDecimal temperature, BigDecimal rainStrength, BigDecimal soilMoisture) {
@@ -22,6 +24,7 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
         this.temperature = temperature;
         this.rainStrength = rainStrength;
         this.soilMoisture = soilMoisture;
+        this.brightness = null;
     }
 
     /**
@@ -104,6 +107,11 @@ public final class BluetoothDataSet implements Comparable<BluetoothDataSet>, Clo
     public BigDecimal getSoilMoisture() {
         return soilMoisture;
     }
+
+    public BigDecimal getBrightness() {
+        return brightness;
+    }
+
 
     /**
      * This will convert all necessary Data, which is contained by this BluetoothDataSet, into Strings and

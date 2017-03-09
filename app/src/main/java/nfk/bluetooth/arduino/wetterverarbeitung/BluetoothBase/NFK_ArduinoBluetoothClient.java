@@ -222,12 +222,14 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
         private List<BigDecimal> pm_Temps;
         private List<BigDecimal> pm_Rains;
         private List<BigDecimal> pm_Mois;
+        private List<BigDecimal> pm_Light;
 
         public ArduinoDecoder() {
             super();
             pm_Temps = new LinkedList<BigDecimal>();
             pm_Rains = new LinkedList<BigDecimal>();
             pm_Mois = new LinkedList<BigDecimal>();
+            pm_Light = new LinkedList<BigDecimal>();
         }
 
         /**
@@ -257,6 +259,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     BigDecimal temperature = calculateMedian(pm_Temps, "Temperature");
                     BigDecimal rainStrength = calculateMedian(pm_Rains, "Rain strength");
                     BigDecimal soilMoisture = calculateMedian(pm_Mois, "Soil Moisture");
+                    BigDecimal brightness = calculateMedian(pm_Light, "Brightness");
                     Date time = Calendar.getInstance().getTime();
                     BluetoothDataSet toAdd = new BluetoothDataSet(time, temperature, rainStrength, soilMoisture);
                     m_receivedData.add(toAdd);
@@ -321,7 +324,23 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         }
                         break;
                     }
-                    //if he didn't enter any case, something has to be wrong, so he'll increment just one, o look, wheter the next Character is a possible set
+                    case (BluetoothDataSet.ARDUINO_INDICATOR_LIGHT): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
+                        Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
+                        i++;
+                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
+                            StringBuilder builder = new StringBuilder();
+                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
+                                builder.append(bufferedInput[j]);
+                                i++;
+                            }
+                            addStringToList(pm_Light, builder.toString());
+                            read = true;
+                        } else {
+                            Log.w(LOG_TAG, "Next Character isn't a number: " + Character.toString(bufferedInput[i + 1]) + " -> Ignoring Indicator.");
+                        }
+                        break;
+                    }
+                    //if he didn't enter any case, something has to be wrong, so he'll increment just one, and take a look at the next Character
                 }
                 if (read) {
                     m_readSinceClear++;
@@ -339,15 +358,25 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             list.add(toInsert);  //adds the BigDecimal
         }
 
+        /**
+         * Calculates the Average of the given List.
+         * It sums all values and then divides by the number of those values.
+         *
+         * @param list     The List from which to calculate the Average
+         * @param listName The String used to refer to the Operation in the Log
+         * @return a BigDecimal which contains the Average from the List, or 0 if the List didn't have any Elements.
+         */
         private BigDecimal calculateMedian(List<BigDecimal> list, String listName) {
             BigDecimal tempCalculator = new BigDecimal(0);
             tempCalculator = tempCalculator.setScale(BluetoothDataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);
-            for (BigDecimal value:
-                    list) {
-                tempCalculator = tempCalculator.add(value);
+            if (!list.isEmpty()) {
+                for (BigDecimal value :
+                        list) {
+                    tempCalculator = tempCalculator.add(value);
+                }
+                tempCalculator = tempCalculator.divide(new BigDecimal(list.size()), BigDecimal.ROUND_HALF_UP);
+                Log.v(LOG_TAG, "calculated Median for the List: " + listName + " with the value: " + tempCalculator.toString());
             }
-            tempCalculator = tempCalculator.divide(new BigDecimal(list.size()), BigDecimal.ROUND_HALF_UP);
-            Log.v(LOG_TAG,"calculated Median for the List: "+listName+" with the value: "+tempCalculator.toString());
             return tempCalculator;
         }
 
@@ -355,6 +384,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             pm_Mois.clear();
             pm_Rains.clear();
             pm_Temps.clear();
+            pm_Light.clear();
         }
 
         /**
@@ -385,6 +415,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             pm_Temps = null;
             pm_Rains = null;
             pm_Mois = null;
+            pm_Light = null;
             return super.cancel();
         }
     }

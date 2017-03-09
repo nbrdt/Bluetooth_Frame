@@ -40,6 +40,8 @@ public class DiagramFragment extends Fragment {
     public static final int DIAGRAM_SECTIONNUMBER_SOIL = 2;
     public static final String DIAGRAM_NAME_RAIN = "Rain Strength";
     public static final int DIAGRAM_SECTIONNUMBER_RAIN = 3;
+    public static final String DIAGRAM_NAME_LIGHT = "Brightness";
+    public static final int DIAGRAM_SECTIONNUMBER_LIGHT = 4;
     private static final String LOG_TAG = "Diagram Fragment";
 
     private DiagramViewSettings viewSettings;
@@ -106,7 +108,6 @@ public class DiagramFragment extends Fragment {
 
 
         Bundle args = getArguments();
-        sectionNumber = args.getInt(ARG_SECTION_NUMBER);
         viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(ARG_VIEWSETTINGS));
         final View rootView;
         switch (getSectionNumber()) {
@@ -118,6 +119,11 @@ public class DiagramFragment extends Fragment {
             case (DIAGRAM_SECTIONNUMBER_RAIN): {
                 rootView = inflater.inflate(R.layout.soilmoisture_tab_layout, container, false);
                 layout = (LinearLayout) rootView.findViewById(R.id.soilmoisture_layout);
+                break;
+            }
+            case (DIAGRAM_SECTIONNUMBER_LIGHT): {
+                rootView = inflater.inflate(R.layout.brightness_tab_layout, container, false);
+                layout = (LinearLayout) rootView.findViewById(R.id.brightness_layout);
                 break;
             }
             case (DIAGRAM_SECTIONNUMBER_TEMP): {
@@ -152,21 +158,27 @@ public class DiagramFragment extends Fragment {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.soilmoisture_line_chart);
                         break;
                     }
+                    case (DIAGRAM_SECTIONNUMBER_LIGHT): {
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.brightness_line_chart);
+                        break;
+                    }
                     case (DIAGRAM_SECTIONNUMBER_TEMP): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);
                         break;
                     }
                     default: {
                         Log.w(LOG_TAG, "Could not identify Section number. Using Temperature Line chart.");
-                        shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);
+                        shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);  //this one might return null
                         break;
                     }
                 }
-                shownDiagram.setBackgroundColor(Color.WHITE);
-                shownDiagram.setDragDecelerationEnabled(false);
-                shownDiagram.setLogEnabled(false);
-                shownDiagram.getXAxis().setValueFormatter(new TimeValueFormatter());
-                shownDiagram.setNoDataText("No Received Data available yet");
+                if (shownDiagram != null) {  //so we have to look fur null values
+                    shownDiagram.setBackgroundColor(Color.WHITE);
+                    shownDiagram.setDragDecelerationEnabled(false);
+                    shownDiagram.setLogEnabled(false);
+                    shownDiagram.getXAxis().setValueFormatter(new TimeValueFormatter());
+                    shownDiagram.setNoDataText("No Received Data available yet");
+                }
                 updateDiagram();
             }
         });
@@ -242,6 +254,9 @@ public class DiagramFragment extends Fragment {
             }
             case DIAGRAM_SECTIONNUMBER_SOIL: {
                 return DIAGRAM_NAME_SOIL + " in %";
+            }
+            case DIAGRAM_SECTIONNUMBER_LIGHT: {
+                return DIAGRAM_NAME_SOIL + " in LUX";
             }
             case DIAGRAM_SECTIONNUMBER_TEMP: {
                 return DIAGRAM_NAME_TEMP + " in °C";

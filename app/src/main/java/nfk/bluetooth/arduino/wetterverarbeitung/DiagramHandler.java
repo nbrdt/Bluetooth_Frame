@@ -33,6 +33,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
     private LinkedList<Entry> m_temperatureValues;
     private LinkedList<Entry> m_soilValues;
     private LinkedList<Entry> m_rainValues;
+    private LinkedList<Entry> m_lightValues;
     private DiagramActivity.SectionsPagerAdapter m_SectionsPagerAdapter;
     private BluetoothDataProvider m_dataProvider;
     private DiagramCallbacks m_callback;
@@ -68,7 +69,6 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
     @Override
     public void onRefreshRequest(DiagramFragment requester) {  //This method provides the Fragment with Data as needed
         Log.i(LOG_TAG, "Refreshing Diagram");
-        m_viewedPosition = m_callback.getCurrentFragmentPosition();
         refreshData();
         processData();
         int sectionNumber = requester.getSectionNumber();
@@ -84,8 +84,18 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
                 requester.resetValues(m_soilValues);
                 break;
             }
-            default: {
+            case (DiagramFragment.DIAGRAM_NAME_LIGHT): {
+                Log.d(LOG_TAG, "Setting Light values on position: " + m_viewedPosition);
+                requester.resetValues(m_lightValues);
+                break;
+            }
+            case (DiagramFragment.DIAGRAM_NAME_TEMP): {
                 Log.d(LOG_TAG, "Setting Temperature values on position: " + m_viewedPosition);
+                requester.resetValues(m_temperatureValues);
+                break;
+            }
+            default: {
+                Log.w(LOG_TAG, "Could not identify Diagram. Setting Temperature values on position: " + m_viewedPosition);
                 requester.resetValues(m_temperatureValues);
                 break;
             }
@@ -129,6 +139,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
     }
 
     private void updateFragment() {
+        m_viewedPosition = m_callback.getCurrentFragmentPosition();
         final DiagramFragment fragment = m_SectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
         if (fragment != null) {
             fragment.updateDiagram();
@@ -161,6 +172,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
             BigDecimal xEntryMin = new BigDecimal(dataSets.get(0).getTimeStamp().getTime()); //gets The Minimum XValue
             BigDecimal xEntryMax = new BigDecimal(dataSets.get(dataSets.size() - 1).getTimeStamp().getTime());  //gets The Maximum XValue
             BigDecimal xEntryRange = xEntryMax.subtract(xEntryMin);  //gets The Range in between which is needed to invert The Axis
+            m_viewedPosition = m_callback.getCurrentFragmentPosition();
             DiagramFragment fragment = m_SectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
             if (fragment != null) {
                 fragment.resetFormat(xEntryRange);  //xEntryRange supplies the MaxValue...
@@ -192,6 +204,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         m_temperatureValues = new LinkedList<>();
         m_soilValues = new LinkedList<>();
         m_rainValues = new LinkedList<>();
+        m_lightValues = new LinkedList<>();
     }
 
     private void clearDataLists() {
@@ -203,6 +216,9 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         }
         if (m_rainValues != null) {
             m_rainValues.clear();
+        }
+        if (m_lightValues != null) {
+            m_lightValues.clear();
         }
     }
 

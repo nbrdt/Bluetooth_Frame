@@ -15,6 +15,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -373,10 +374,14 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
                     return DiagramFragment.DIAGRAM_NAME_TEMP;
                 case DiagramFragment.DIAGRAM_SECTIONNUMBER_RAIN:
                     return DiagramFragment.DIAGRAM_NAME_RAIN;
+                case DiagramFragment.DIAGRAM_SECTIONNUMBER_LIGHT:
+                    return DiagramFragment.DIAGRAM_NAME_LIGHT;
                 case DiagramFragment.DIAGRAM_SECTIONNUMBER_SOIL:
                     return DiagramFragment.DIAGRAM_NAME_SOIL;
+                default:
+                    Log.w(LOG_TAG, "Could not identify Page title");
+                    return DiagramFragment.DIAGRAM_NAME_TEMP;
             }
-            return null;
         }
 
         /**
