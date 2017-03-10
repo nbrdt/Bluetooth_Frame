@@ -24,8 +24,8 @@ import nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment;
 import static nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment.sectionNumberToPosition;
 
 /**
- * @author kevin
- * @version 0.0 from 09.03.2017 in Bluetooth_Frame
+ * @author KI
+ * @version 1.1
  **/
 
 public class DiagramHandler extends Handler implements DiagramFragment.RefreshListener, ArduinoBluetoothClient.OnReceiveListener {
