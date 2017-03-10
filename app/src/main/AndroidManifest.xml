@@ -18,13 +18,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="nfk.bluetooth.arduino.wetterverarbeitung.DeviceList" />
+        <activity
+            android:name="nfk.bluetooth.arduino.wetterverarbeitung.DeviceList"
+            android:parentActivityName=".Main" />
         <activity
             android:name="nfk.bluetooth.arduino.wetterverarbeitung.SettingsActivity"
             android:label="@string/title_activity_settings" />
         <activity
             android:name="nfk.bluetooth.arduino.wetterverarbeitung.DiagramActivity"
             android:label="@string/title_activity_diagram"
+            android:parentActivityName=".DeviceList"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
     </application>
 

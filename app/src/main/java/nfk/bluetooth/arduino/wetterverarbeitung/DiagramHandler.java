@@ -9,6 +9,7 @@ import android.util.Log;
 import com.github.mikephil.charting.data.Entry;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -79,30 +80,30 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
             case (DiagramFragment.DIAGRAM_NAME_RAIN): {
                 if (isLogEnabled())
                     Log.d(LOG_TAG, "Setting Rain Strength values on position: " + m_viewedPosition);
-                requester.resetValues(m_rainValues);
+                requester.resetValues(copyValues(m_rainValues));  //values need to be copied before returning, otherwise the reference from the outside would hamper Thread-Safety
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_SOIL): {
                 if (isLogEnabled())
                     Log.d(LOG_TAG, "Setting Soil Moisture values on position: " + m_viewedPosition);
-                requester.resetValues(m_soilValues);
+                requester.resetValues(copyValues(m_soilValues)); //values need to be copied before returning, otherwise the reference from the outside would hamper Thread-Safety
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_LIGHT): {
                 if (isLogEnabled())
                     Log.d(LOG_TAG, "Setting Light values on position: " + m_viewedPosition);
-                requester.resetValues(m_lightValues);
+                requester.resetValues(copyValues(m_lightValues)); //values need to be copied before returning, otherwise the reference from the outside would hamper Thread-Safety
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_TEMP): {
                 if (isLogEnabled())
                     Log.d(LOG_TAG, "Setting Temperature values on position: " + m_viewedPosition);
-                requester.resetValues(m_temperatureValues);
+                requester.resetValues(copyValues(m_temperatureValues)); //values need to be copied before returning, otherwise the reference from the outside would hamper Thread-Safety
                 break;
             }
             default: {
                 Log.w(LOG_TAG, "Could not identify Diagram. Setting Temperature values on position: " + m_viewedPosition);
-                requester.resetValues(m_temperatureValues);
+                requester.resetValues(copyValues(m_temperatureValues));
                 break;
             }
         }
@@ -213,6 +214,15 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
                 m_bluetoothData.add(data);
             }
         }
+    }
+
+    private LinkedList<Entry> copyValues(List<Entry> toCopy) {
+        LinkedList<Entry> copy = new LinkedList<>();
+        for (Entry e :
+                toCopy) {
+            copy.add(e);
+        }
+        return copy;
     }
 
     private void prepareLists(int size) {

@@ -239,7 +239,7 @@ public class DiagramFragment extends Fragment {
         if (values.isEmpty()) {
             return null;
         } else {
-            LineDataSet dataSet = new LineDataSet(copyValues(), getDataName());
+            LineDataSet dataSet = new LineDataSet(values, getDataName());
             dataSet.setColor(viewSettings.getGraphColor());
             LineData data = new LineData(dataSet);
             data.setValueFormatter(new ValueFormatter());
@@ -266,15 +266,6 @@ public class DiagramFragment extends Fragment {
                 return DIAGRAM_NAME_TEMP + " in °C";
             }
         }
-    }
-
-    private List<Entry> copyValues() {
-        ArrayList<Entry> copy = new ArrayList<>(values.size());
-        for (Entry e :
-                values) {
-            copy.add(e);
-        }
-        return copy;
     }
 
     public static int sectionNumberToPosition(int sectionNumber) {
