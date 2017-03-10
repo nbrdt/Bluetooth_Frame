@@ -116,9 +116,9 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
     @Override
     public void connectBT(String AddressAndName, int tries) throws BluetoothConnectionStateException {
         super.connectBT(AddressAndName, tries);
-        Log.v(LOG_TAG,"creating ByteStream Converter");
+        if (isLogEnabled()) Log.v(LOG_TAG, "creating ByteStream Converter");
         m_Reader = m_ConnectionHandler.getInputStream(); //@throws BluetoothConnectionState
-        Log.i(LOG_TAG,"ready to read InputStreams");
+        if (isLogEnabled()) Log.i(LOG_TAG, "ready to read InputStreams");
         resetTimer();
         m_MessageTimer.scheduleAtFixedRate(new ArduinoDecoder(), m_TimerOffset, m_ScheduleRate);
     }
@@ -134,7 +134,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
 
     @Override
     public boolean destroy() {
-        Log.i(LOG_TAG, "destroying ArduinoBluetoothClient");
+        if (isLogEnabled()) Log.i(LOG_TAG, "destroying ArduinoBluetoothClient");
         clearReceivedData();
         m_receivedData = null;
         cancelTimer();
@@ -255,6 +255,7 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                 recognizeArduinoSend(bufferedInput, received);
                 if (pm_Temps.size() > 0 &&
                         pm_Rains.size() > 0 &&
+                        pm_Light.size() > 0 &&
                         pm_Mois.size() > 0) {
                     BigDecimal temperature = calculateMedian(pm_Temps, "Temperature");
                     BigDecimal rainStrength = calculateMedian(pm_Rains, "Rain strength");
@@ -269,20 +270,23 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             }
         }
 
+        /**
+         * Reads Characters from the given Input Array and adds read values to the appropriate list.
+         *
+         * @param bufferedInput The char Array in which he should look for Arduino Indikators with following numbers.
+         * @param received      The number of received Chars, or any other additional Border until which he should read
+         */
         private void recognizeArduinoSend (char[] bufferedInput, int received) {
-            for (Integer i = 0; ((i + 1) < bufferedInput.length) && ((i + 1) < received); i++) {
+            for (Integer i = 0; (i + 1 < bufferedInput.length) && (i + 1 < received); i++) {  //checking for plus 1, so that the condition doesn't have to be watched, when checking for values
                 boolean read = false;
                 switch (bufferedInput[i]) {
                     case (BluetoothDataSet.ARDUINO_INDICATOR_SOIL_MOISTURE): {  // notices a Humidity Indicator -> next has to be corresponding value
-                        Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
+                        if (isLogEnabled())
+                            Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         i++;
-                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
-                            StringBuilder builder = new StringBuilder();
-                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
-                                builder.append(bufferedInput[j]);
-                                i++;
-                            }
-                            addStringToList(pm_Mois, builder.toString());
+                        if (isDigit(bufferedInput[i])) {  // next should be a corresponding value -> adding
+                            String readNumber = readNumber(bufferedInput, received, i);
+                            addStringToList(pm_Mois, readNumber);
                             read = true;
                         }
                         else {
@@ -291,15 +295,12 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         break;
                     }
                     case (BluetoothDataSet.ARDUINO_INDICATOR_TEMPERATURE): {  // notices a Temperature Indicator -> next has to be corresponding value
-                        Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
+                        if (isLogEnabled())
+                            Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));
                         i++;
-                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
-                            StringBuilder builder = new StringBuilder();
-                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
-                                builder.append(bufferedInput[j]);
-                                i++;
-                            }
-                            addStringToList(pm_Temps, builder.toString());
+                        if (isDigit(bufferedInput[i])) {  // next should be a corresponding value -> adding
+                            String readNumber = readNumber(bufferedInput, received, i);
+                            addStringToList(pm_Temps, readNumber);
                             read = true;
                         }
                         else {
@@ -308,15 +309,12 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         break;
                     }
                     case (BluetoothDataSet.ARDUINO_INDICATOR_RAINING): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
-                        Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
+                        if (isLogEnabled())
+                            Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
                         i++;
-                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
-                            StringBuilder builder = new StringBuilder();
-                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
-                                builder.append(bufferedInput[j]);
-                                i++;
-                            }
-                            addStringToList(pm_Rains, builder.toString());
+                        if (isDigit(bufferedInput[i])) {  // next should be a corresponding value -> adding
+                            String readNumber = readNumber(bufferedInput, received, i);
+                            addStringToList(pm_Rains, readNumber);
                             read = true;
                         }
                         else {
@@ -325,22 +323,19 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                         break;
                     }
                     case (BluetoothDataSet.ARDUINO_INDICATOR_LIGHT): {  // notices a Soil-Moisture Indicator -> next has to be corresponding value
-                        Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
+                        if (isLogEnabled())
+                            Log.v(LOG_TAG, "Found: " + Character.toString(bufferedInput[i]));  // shows the received Value
                         i++;
-                        if (isDigit(bufferedInput[i])) {  // next might be a corresponding value -> adding
-                            StringBuilder builder = new StringBuilder();
-                            for (int j = i; ((j) < bufferedInput.length) && isDigit(bufferedInput[j]) && (j) < received; j++) {
-                                builder.append(bufferedInput[j]);
-                                i++;
-                            }
-                            addStringToList(pm_Light, builder.toString());
+                        if (isDigit(bufferedInput[i])) {  // next should be a corresponding value -> adding
+                            String readNumber = readNumber(bufferedInput, received, i);
+                            addStringToList(pm_Light, readNumber);
                             read = true;
                         } else {
                             Log.w(LOG_TAG, "Next Character isn't a number: " + Character.toString(bufferedInput[i + 1]) + " -> Ignoring Indicator.");
                         }
                         break;
                     }
-                    //if he didn't enter any case, something has to be wrong, so he'll increment just one, and take a look at the next Character
+                    //if he didn't enter any case, something has to be wrong, so he'll increment just by one, and take a look at the next Character
                 }
                 if (read) {
                     m_readSinceClear++;
@@ -351,8 +346,30 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
             }
         }
 
+        /**
+         * Reads on number on the given input Char array.
+         *
+         * @param bufferedInput The Array from which the read an received number
+         * @param received      The End to which he may read at maximum
+         * @param counter       The counter variable to be incremented, whilst wakling over the array. Functions as a start position.
+         * @return A String containing the read number. Might be "" if the Character at the counter position isn't a number as defined by {@link java.lang.Character}.isDigit
+         */
+        private String readNumber(char[] bufferedInput, int received, Integer counter) {
+            StringBuilder builder = new StringBuilder();
+            while (counter < bufferedInput.length && isDigit(bufferedInput[counter]) && counter < received) {
+                builder.append(bufferedInput[counter]);
+                counter++;
+            }
+            return builder.toString();
+        }
+
+        /**
+         * Adds a {@link BigDecimal} to the given List from the given String value. Will properly set the Scaling values.
+         * @param list The List in which to add the number.
+         * @param toAdd The String representation of a number, which should be converted into an BigDecimal
+         */
         private void addStringToList(List<BigDecimal> list, String toAdd) {
-            Log.v(LOG_TAG, "Adding: " + toAdd);   // shows the received Value
+            if (isLogEnabled()) Log.v(LOG_TAG, "Adding: " + toAdd);   // shows the received Value
             BigDecimal toInsert = new BigDecimal(toAdd);  //creates a BigDecimal from the received Value
             toInsert = toInsert.setScale(BluetoothDataSet.DATA_PRECISION, BigDecimal.ROUND_HALF_UP);  // sets this BegDecimals-DiagramSettings
             list.add(toInsert);  //adds the BigDecimal
@@ -375,7 +392,8 @@ public final class NFK_ArduinoBluetoothClient extends NFK_BluetoothClient implem
                     tempCalculator = tempCalculator.add(value);
                 }
                 tempCalculator = tempCalculator.divide(new BigDecimal(list.size()), BigDecimal.ROUND_HALF_UP);
-                Log.v(LOG_TAG, "calculated Median for the List: " + listName + " with the value: " + tempCalculator.toString());
+                if (isLogEnabled())
+                    Log.v(LOG_TAG, "calculated Median for the List: " + listName + " with the value: " + tempCalculator.toString());
             }
             return tempCalculator;
         }

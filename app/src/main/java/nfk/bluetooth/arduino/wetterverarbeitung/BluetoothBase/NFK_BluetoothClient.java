@@ -22,6 +22,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
     private List<String> m_addressesAndNames;
     private static final String LOG_TAG = "BluetoothClient";
     protected ClientConnectionHandler m_ConnectionHandler;
+    private boolean logEnabled;
     private volatile boolean m_succeed;
     private BluetoothListener m_listener;
 
@@ -34,6 +35,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
         m_ConnectionHandler = new ClientConnectionHandler(m_listener, charset);
         m_connectedListeners = new LinkedList<>();
         m_disconnectedListeners = new LinkedList<>();
+        setLogEnabled(true);
     }
 
     protected NFK_BluetoothClient(String charset) {
@@ -119,17 +121,18 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
             throw new BluetoothConnectionStateException(getConnectionState(),
                     "Client could not be connected - because of Bluetooth being inactive", e);
         }
-        Log.d(LOG_TAG, "starting check for device");
+        if (isLogEnabled()) Log.d(LOG_TAG, "starting check for device");
         BluetoothDevice matchingDevice;
         String[] separated = AddressAndName.split(ADDRESS_SEPARATOR);
-        Log.i(LOG_TAG, "found:" + separated[0]);
+        if (isLogEnabled()) Log.i(LOG_TAG, "found:" + separated[0]);
         matchingDevice = m_myBluetooth.getRemoteDevice(separated[1]);
         if (matchingDevice == null) {
             Log.e(LOG_TAG, "could not identify matching Bluetooth device");
             throw new IllegalArgumentException("Input Address doesn't match any paired device");
         }
-        Log.d(LOG_TAG, "found matching Bluetooth device with Name: " + matchingDevice.getName());
-        Log.v(LOG_TAG, "Starting connection");
+        if (isLogEnabled())
+            Log.d(LOG_TAG, "found matching Bluetooth device with Name: " + matchingDevice.getName());
+        if (isLogEnabled()) Log.v(LOG_TAG, "Starting connection");
         while (tries > 0 && !performConnectAttempt(matchingDevice)) { //throws Bluetooth Unnoticed Exception
             tries--;
         }
@@ -182,7 +185,7 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
      */
     @Override
     public boolean destroy() {
-        Log.i(LOG_TAG, "terminating BluetoothClient");
+        if (isLogEnabled()) Log.i(LOG_TAG, "terminating BluetoothClient");
         if (m_addressesAndNames != null) {
             m_addressesAndNames.clear();
             m_addressesAndNames = null;
@@ -272,6 +275,26 @@ public class NFK_BluetoothClient implements BluetoothConstants, BluetoothClient 
     @Override
     public int getConnectionState() {
         return m_ConnectionHandler.getConnectionState();
+    }
+
+    /**
+     * Sets whether or not the client should Log Debugging Information.
+     * Errors and warnings will be printed, no matter what value is set here.
+     *
+     * @param enabled Whether the Log should be enabled, or not.
+     */
+    @Override
+    public synchronized void setLogEnabled(boolean enabled) {
+        logEnabled = enabled;
+        if (m_ConnectionHandler != null) m_ConnectionHandler.setLogEnabled(enabled);
+    }
+
+    /**
+     * @return Whether or not the client should Log Debugging Information.
+     */
+    @Override
+    public synchronized boolean isLogEnabled() {
+        return logEnabled;
     }
 
     /**

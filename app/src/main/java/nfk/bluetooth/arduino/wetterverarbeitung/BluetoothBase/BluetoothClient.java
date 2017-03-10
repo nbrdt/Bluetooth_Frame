@@ -60,7 +60,7 @@ public interface BluetoothClient {
     public void write(String toWrite) throws BluetoothConnectionStateException;
 
     /**
-     * Calls java.io.Reader's read Method on the Input Stream.
+     * Calls {@link java.io.Reader}'s read Method on the Input Stream.
      * WARNING: Subclasses might not implement this Method and throw an UnsupportedOperationException
      * @param buffer a Char array in which the Data should be read
      * @return the number of received bytes
@@ -76,6 +76,19 @@ public interface BluetoothClient {
      * @return the current ConnectionState of this BluetoothClient, as defined in the BluetoothConstants Interface
      */
     public int getConnectionState();
+
+    /**
+     * Sets whether or not the client should Log Debugging Information, set to true by default.
+     * Errors and warnings will be printed, no matter what value is set here.
+     *
+     * @param enabled Whether the Log should be enabled, or not.
+     */
+    public void setLogEnabled(boolean enabled);
+
+    /**
+     * @return Whether or not the client should Log Debugging Information.
+     */
+    public boolean isLogEnabled();
 
     /**
      * Destructs the BluetoothClient. Clears for example any running connection.

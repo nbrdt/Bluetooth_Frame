@@ -106,16 +106,20 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
 
         if (addresse != null && !addresse.isEmpty()) {
             SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(DiagramActivity.this);
+            int receiveRate = 1000;
             try {
-                m_client = NFK_ArduinoBluetoothClient.getClient(Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, "1000")), 2000);
+                receiveRate = Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE));
             } catch (NumberFormatException e) {
                 finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
             }
+            m_client = NFK_ArduinoBluetoothClient.getClient(receiveRate, 3000);
+            m_client.setLogEnabled(false);
             reloadSettings();
             m_client.setMessageBufferSize(m_messageBufferSize);
             HandlerThread handlerThread = new HandlerThread("Diagram Refresher");
             handlerThread.start();
             m_handler = new DiagramHandler(handlerThread, this, m_maxBack);
+            m_handler.setLogEnabled(false);
             if (m_client != null) {
                 try {
                     m_client.connectBT(addresse, 1);

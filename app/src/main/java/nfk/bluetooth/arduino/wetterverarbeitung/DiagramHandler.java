@@ -40,6 +40,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
     private HandlerThread worker; //Reference, so that the Thread isn't destroyed by the Garbage Collection
     private int m_maxBack;
     private int m_viewedPosition;
+    private volatile boolean logEnabled;
 
     private static final String LOG_TAG = "Diagram Handler";
     public static final int MESSAGE_UPDATE_FRAGMENT = 1;
@@ -52,6 +53,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         m_SectionsPagerAdapter = host.getSectionsPagerAdapter();
         m_dataProvider = new BluetoothDataProvider(host.getApplicationContext());
         m_callback = host;
+        setLogEnabled(true);
         prepareLists(0);
     }
 
@@ -68,29 +70,33 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
 
     @Override
     public void onRefreshRequest(DiagramFragment requester) {  //This method provides the Fragment with Data as needed
-        Log.i(LOG_TAG, "Refreshing Diagram");
+        if (isLogEnabled()) Log.i(LOG_TAG, "Refreshing Diagram");
         refreshData();
         processData();
         int sectionNumber = requester.getSectionNumber();
         String title = m_SectionsPagerAdapter.getPageTitle(sectionNumberToPosition(sectionNumber)).toString();
         switch (title) {
             case (DiagramFragment.DIAGRAM_NAME_RAIN): {
-                Log.d(LOG_TAG, "Setting Rain Strength values on position: " + m_viewedPosition);
+                if (isLogEnabled())
+                    Log.d(LOG_TAG, "Setting Rain Strength values on position: " + m_viewedPosition);
                 requester.resetValues(m_rainValues);
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_SOIL): {
-                Log.d(LOG_TAG, "Setting Soil Moisture values on position: " + m_viewedPosition);
+                if (isLogEnabled())
+                    Log.d(LOG_TAG, "Setting Soil Moisture values on position: " + m_viewedPosition);
                 requester.resetValues(m_soilValues);
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_LIGHT): {
-                Log.d(LOG_TAG, "Setting Light values on position: " + m_viewedPosition);
+                if (isLogEnabled())
+                    Log.d(LOG_TAG, "Setting Light values on position: " + m_viewedPosition);
                 requester.resetValues(m_lightValues);
                 break;
             }
             case (DiagramFragment.DIAGRAM_NAME_TEMP): {
-                Log.d(LOG_TAG, "Setting Temperature values on position: " + m_viewedPosition);
+                if (isLogEnabled())
+                    Log.d(LOG_TAG, "Setting Temperature values on position: " + m_viewedPosition);
                 requester.resetValues(m_temperatureValues);
                 break;
             }
@@ -138,6 +144,15 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         return this.worker;
     }
 
+    public synchronized void setLogEnabled(boolean enabled) {
+        logEnabled = enabled;
+        if (m_dataProvider != null) m_dataProvider.setLogEnabled(enabled);
+    }
+
+    public synchronized boolean isLogEnabled() {
+        return logEnabled;
+    }
+
     private void updateFragment() {
         m_viewedPosition = m_callback.getCurrentFragmentPosition();
         final DiagramFragment fragment = m_SectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
@@ -149,8 +164,8 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
     }
 
     private void processData() {
+        Date current = Calendar.getInstance().getTime();
         if (m_maxBack > 0) {
-            Date current = Calendar.getInstance().getTime();
             LinkedList<BluetoothDataSet> temp = new LinkedList<>();
             for (int i = (m_bluetoothData.size() - 1); (i >= 0); i--) {  //backward for loop...
                 BluetoothDataSet data = m_bluetoothData.get(i);
@@ -160,17 +175,17 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
                     break;  //just to increase Performance
                 }
             }
-            addEntries(temp);
+            addEntries(temp, current);
         } else {
-            addEntries(m_bluetoothData);
+            addEntries(m_bluetoothData, current);
         }
     }
 
-    private void addEntries(@NonNull List<BluetoothDataSet> dataSets) {
+    private void addEntries(@NonNull List<BluetoothDataSet> dataSets, Date current) {
         prepareLists(dataSets.size());
         if (!dataSets.isEmpty()) {
             BigDecimal xEntryMin = new BigDecimal(dataSets.get(0).getTimeStamp().getTime()); //gets The Minimum XValue
-            BigDecimal xEntryMax = new BigDecimal(dataSets.get(dataSets.size() - 1).getTimeStamp().getTime());  //gets The Maximum XValue
+            BigDecimal xEntryMax = new BigDecimal(current.getTime());  //gets The Maximum XValue (which is the current Time, so that the current Time is displayed as the 0 point)
             BigDecimal xEntryRange = xEntryMax.subtract(xEntryMin);  //gets The Range in between which is needed to invert The Axis
             m_viewedPosition = m_callback.getCurrentFragmentPosition();
             DiagramFragment fragment = m_SectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);

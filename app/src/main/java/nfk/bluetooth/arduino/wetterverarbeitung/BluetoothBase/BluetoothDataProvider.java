@@ -52,6 +52,7 @@ public class BluetoothDataProvider {
     private PrintWriter m_FileWriter;
     private LineNumberReader m_FileReader;
     private DateFormat m_formatter;
+    private boolean logEnabled;
 
     public BluetoothDataProvider(Context context) {
         if (context != null) {
@@ -62,7 +63,8 @@ public class BluetoothDataProvider {
         }
         m_Data = new File(m_fileDirectory, DATAFILE_NAME);
         m_formatter = DateFormat.getDateTimeInstance();
-        Log.i(LOG_TAG, "Path:" + m_Data.getAbsolutePath());
+        logEnabled = true;
+        //Log.i(LOG_TAG, "Path:" + m_Data.getAbsolutePath());
     }
 
     private List<BluetoothDataSet> readData(boolean leaveInputStreamOpen) throws UnrecognizableBluetoothDataException {
@@ -133,29 +135,13 @@ public class BluetoothDataProvider {
         m_Data.delete();
     }
 
-    /* somehow not working... working on it
-    public void writeDataToEnd (List<BluetoothDataSet> toWrite, boolean leaveOutputStreamOpen) {
-        if (m_FileWriter == null) {
-            try {
-                m_FileWriter = new PrintWriter(new FileWriter(m_Data), true);
-            } catch (IOException e) {
-                Log.e(LOG_TAG, "Could not resolve File Writer", e);
-                return;
-            }
-        }
-        for (BluetoothDataSet data :
-                toWrite) {
-            m_FileWriter.println("####");
-            writeDateToEnd(INDICATOR_TIME, data.getTimeStamp());
-            writeValueToEnd(INDICATOR_TEMP, data.getTemperature());
-            writeValueToEnd(INDICATOR_HUMID, data.getRainStrength());
-            writeValueToEnd(INDICATOR_SOIL, data.getSoilMoisture());
-        }
-        if (!leaveOutputStreamOpen) {
-            m_FileWriter.close();
-            m_FileWriter = null;
-        }
-    }*/
+    public void setLogEnabled(boolean enabled) {
+        logEnabled = enabled;
+    }
+
+    public boolean isLogEnabled() {
+        return logEnabled;
+    }
 
     private BigDecimal readValue(String indicator) throws IOException, UnrecognizableBluetoothDataException {
         String read = m_FileReader.readLine();
@@ -186,14 +172,14 @@ public class BluetoothDataProvider {
     private void writeValue(String indicator, BigDecimal toWrite) {
         m_FileWriter.print(indicator);
         String numberToWrite = toWrite.toString();
-        Log.v(LOG_TAG, "Writing Number:" + numberToWrite);
+        if (isLogEnabled()) Log.v(LOG_TAG, "Writing Number:" + numberToWrite);
         m_FileWriter.println(numberToWrite);
     }
 
     private void writeDate(String indicator, Date toWrite) {
         m_FileWriter.print(indicator);
         String date = m_formatter.format(toWrite);
-        Log.v(LOG_TAG, "Writing Date:" + toWrite);
+        if (isLogEnabled()) Log.v(LOG_TAG, "Writing Date:" + toWrite);
         m_FileWriter.println(date);
     }
 
@@ -228,16 +214,4 @@ public class BluetoothDataProvider {
             m_FileWriter = null;
         }
     }
-    /*somehow not working... working on it
-    private void writeValueToEnd (String indicator, BigDecimal toWrite) {
-        m_FileWriter.append(indicator);
-        m_FileWriter.append(toWrite.toString());
-        m_FileWriter.append("\n");
-    }
-
-    private void writeDateToEnd (String indicator, Date toWrite) {
-        m_FileWriter.append(indicator);
-        m_FileWriter.append(m_formatter.format(toWrite));
-        m_FileWriter.append("\n");
-    }*/
 }
