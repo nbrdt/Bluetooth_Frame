@@ -43,7 +43,6 @@ import static nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment.pos
  */
 
 public class DiagramActivity extends AppCompatActivity implements DiagramHandler.DiagramCallbacks, ViewPager.OnPageChangeListener, ActivityResults {
-
     private static final String LOG_TAG = "Diagram Activity";
     /**
      * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -62,7 +61,6 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
     private int m_messageBufferSize;
 
 
-
     private NonSwipableViewPager mViewPager;
 
     /**
@@ -78,7 +76,10 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
+        ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.setDisplayHomeAsUpEnabled(true);
+        }
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
         mSectionsPagerAdapter = new SectionsPagerAdapter(getSupportFragmentManager());
@@ -106,31 +107,24 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
         String addresse = getIntent().getExtras().getString("addresse");
 
         if (addresse != null && !addresse.isEmpty()) {
-            SharedPreferences preference = PreferenceManager.getDefaultSharedPreferences(DiagramActivity.this);
-            int receiveRate = 1000;
-            try {
-                receiveRate = Integer.parseInt(preference.getString(SettingsActivity.KEY_CONNECTION_RECEIVERATE, SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE));
-            } catch (NumberFormatException e) {
-                finishWithError("Could not resolve receive Rate. You may only enter Numbers in the Settings");
-            }
-            m_client = NFK_ArduinoBluetoothClient.getClient(receiveRate, 3000);
-            m_client.setLogEnabled(false);
-            reloadSettings();
-            m_client.setMessageBufferSize(m_messageBufferSize);
+            int receiveRate = Integer.parseInt(SettingsActivity.PREF_DEFAULTVALUE_CONNECTION_RECEIVERATE);
             HandlerThread handlerThread = new HandlerThread("Diagram Refresher");
             handlerThread.start();
-            m_handler = new DiagramHandler(handlerThread, this, m_maxBack);
-            m_handler.setLogEnabled(true);
-            if (m_client != null) {
-                try {
-                    m_client.connectBT(addresse, 1);
-                } catch (BluetoothConnectionStateException e) {
-                    finishWithError("Could not connect to Target Address");
-                }
+            m_client = NFK_ArduinoBluetoothClient.getClient(receiveRate, 3000);  //constructs a default Client, because Settings are applied anyway in reloadSettings
+            m_client.setLogEnabled(false);
+            m_client.setMessageBufferSize(m_messageBufferSize);
+            m_handler = new DiagramHandler(handlerThread, this);  //constructs a default Handler, because Settings are applied anyway in reloadSettings
+            m_handler.setLogEnabled(false);
+            reloadSettings();
+            try {
+                m_client.connectBT(addresse, 1);
+            } catch (BluetoothConnectionStateException e) {
+                Log.e(LOG_TAG, "Could not connect to Target Address", e);
+                finishWithError("Could not connect to Target Address");
             }
 
         } else {
-            finishWithError("Invalid Bluetooth-Address");
+            finishWithError("Invalid Bluetooth-Address. Contact Developers."); //If he enters this case, than it's definitely our fault.
         }
 
     }
@@ -141,10 +135,6 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
         super.onStart();
         m_client.setReceiveListener(m_handler);
         m_handler.notifyOnStart();
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.setDisplayHomeAsUpEnabled(true);
-        }
     }
 
 

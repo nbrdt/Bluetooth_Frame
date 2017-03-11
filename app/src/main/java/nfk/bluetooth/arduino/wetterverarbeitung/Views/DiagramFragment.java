@@ -51,7 +51,7 @@ public class DiagramFragment extends Fragment {
     private LineChart shownDiagram;
     LinearLayout layout;
 
-    private LinkedList<Entry> values;
+    private ArrayList<Entry> values;
 
     private static final String ARG_SECTION_NUMBER = "section_number";
     private static final String ARG_VIEWSETTINGS = "view_settings";
@@ -190,7 +190,7 @@ public class DiagramFragment extends Fragment {
     }
 
 
-    public void resetValues(LinkedList<Entry> newValues) {
+    public void resetValues(ArrayList<Entry> newValues) {
         values = newValues;
     }
 

@@ -71,7 +71,6 @@ public class BluetoothDataProvider {
         checkAndRecreate(true, false);  //throws UnrecognizableBluetoothDataException
         List<BluetoothDataSet> readData = new Vector<>();
         try {
-            //m_FileReader.reset();
             String read;
             do {
                 read = m_FileReader.readLine();

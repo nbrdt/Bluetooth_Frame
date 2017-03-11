@@ -14,6 +14,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import nfk.bluetooth.arduino.wetterverarbeitung.BluetoothBase.ArduinoBluetoothClient;
@@ -30,8 +31,8 @@ import static nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment.sec
  **/
 
 public class DiagramHandler extends Handler implements DiagramFragment.RefreshListener, ArduinoBluetoothClient.OnReceiveListener {
-    private Vector<BluetoothDataSet> m_bluetoothData;
-    private LinkedList<Entry> m_temperatureValues;
+    private Vector<BluetoothDataSet> m_bluetoothData;  //Vector is Thread safe...
+    private LinkedList<Entry> m_temperatureValues;  //uses Linked List's so that adding values is performed relative fast
     private LinkedList<Entry> m_soilValues;
     private LinkedList<Entry> m_rainValues;
     private LinkedList<Entry> m_lightValues;
@@ -56,6 +57,10 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         m_callback = host;
         setLogEnabled(true);
         prepareLists(0);
+    }
+
+    public DiagramHandler(HandlerThread worker, DiagramActivity host) {
+        this(worker, host, Integer.parseInt(SettingsActivity.PREF_DEFAULTVALUE_DATA_SHOWVALUES));
     }
 
     @Override
@@ -160,7 +165,7 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         if (fragment != null) {
             fragment.updateDiagram();
         } else {
-            Log.w(LOG_TAG, "Could not update Diagram Fragment, because Fragment is not available");
+            Log.w(LOG_TAG, "Could not update Diagram Fragment, because Fragment is not available at Position");
         }
     }
 
@@ -216,8 +221,8 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         }
     }
 
-    private LinkedList<Entry> copyValues(List<Entry> toCopy) {
-        LinkedList<Entry> copy = new LinkedList<>();
+    private ArrayList<Entry> copyValues(List<Entry> toCopy) {
+        ArrayList<Entry> copy = new ArrayList<>(toCopy.size());  //uses Arrays, so that the values can be accessed as fast as possible
         for (Entry e :
                 toCopy) {
             copy.add(e);
@@ -250,7 +255,6 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
 
     public interface DiagramCallbacks {
         public int getCurrentFragmentPosition();
-
         public List<BluetoothDataSet> getReceivedData();
     }
 }
