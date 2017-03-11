@@ -120,7 +120,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
             HandlerThread handlerThread = new HandlerThread("Diagram Refresher");
             handlerThread.start();
             m_handler = new DiagramHandler(handlerThread, this, m_maxBack);
-            m_handler.setLogEnabled(false);
+            m_handler.setLogEnabled(true);
             if (m_client != null) {
                 try {
                     m_client.connectBT(addresse, 1);
@@ -283,7 +283,7 @@ public class DiagramActivity extends AppCompatActivity implements DiagramHandler
 
     private void updateFragment() {
         Message msg = m_handler.obtainMessage(DiagramHandler.MESSAGE_UPDATE_FRAGMENT);
-        m_handler.sendMessageAtFrontOfQueue(msg);  //it's high Priority to update the Fragment
+        m_handler.sendMessage(msg);
     }
 
     private void reloadSettings() {

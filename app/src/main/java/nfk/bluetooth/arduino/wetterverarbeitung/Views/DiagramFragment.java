@@ -172,7 +172,7 @@ public class DiagramFragment extends Fragment {
                         break;
                     }
                 }
-                if (shownDiagram != null) {  //so we have to look fur null values
+                if (shownDiagram != null) {  //so we have to look for null values
                     shownDiagram.setBackgroundColor(Color.WHITE);
                     shownDiagram.setDragDecelerationEnabled(false);
                     shownDiagram.setLogEnabled(false);
@@ -203,11 +203,11 @@ public class DiagramFragment extends Fragment {
         if (shownDiagram != null) {
             refresher.onRefreshRequest(this);
             shownDiagram.setData(createDataFromValues());
-            //shownDiagram.notifyDataSetChanged();
             Handler refresher = new Handler(Looper.getMainLooper());
             refresher.post(new Runnable() {
                 @Override
                 public void run() {
+                    shownDiagram.notifyDataSetChanged();
                     shownDiagram.invalidate();
                 }
             });
