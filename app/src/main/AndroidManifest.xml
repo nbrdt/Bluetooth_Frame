@@ -28,7 +28,7 @@
             android:name="nfk.bluetooth.arduino.wetterverarbeitung.DiagramActivity"
             android:label="@string/title_activity_diagram"
             android:parentActivityName=".DeviceList"
-            android:theme="@style/Theme.AppCompat.Light.NoActionBar"></activity>
+            android:theme="@style/Theme.AppCompat.Light.NoActionBar" />
     </application>
 
 </manifest>
