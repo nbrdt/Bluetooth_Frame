@@ -7,8 +7,8 @@ import android.os.Parcel;
 import android.os.Parcelable;
 
 /**
- * @author kevin
- * @version 0.0
+ * @author NB
+ * @version 1.0
  **/
 public class DiagramViewSettings implements Parcelable {
     public static final int DEFAULT_FRAME_COLOR = Color.BLACK;

@@ -324,8 +324,9 @@ public class SettingsActivity extends AppCompatPreferenceActivity implements Act
             if (id == android.R.id.home) {
                 startActivity(new Intent(getActivity(), SettingsActivity.class));
                 return true;
+            } else {
+                return super.onOptionsItemSelected(item);
             }
-            return super.onOptionsItemSelected(item);
         }
     }
 }

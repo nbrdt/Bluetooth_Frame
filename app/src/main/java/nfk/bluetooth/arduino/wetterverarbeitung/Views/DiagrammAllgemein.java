@@ -10,9 +10,10 @@ import android.widget.Toast;
 import java.util.ArrayList;
 
 /**
- * Created by NB on 23.01.2017.
+ * @author NB
+ * @version 1.1
  */
-
+@Deprecated
 public class DiagrammAllgemein extends View {
 
     private String einheit;

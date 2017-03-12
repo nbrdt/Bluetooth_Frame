@@ -13,6 +13,7 @@ import android.util.Log;
  * @author KI
  * @version 1.0
  **/
+@Deprecated
 public class ListDialogFragment extends AppCompatDialogFragment {
     private static final String INSTANCESTATE_ITEMS = "Items";
     private static final String INSTANCESTATE_TITLE = "Title";

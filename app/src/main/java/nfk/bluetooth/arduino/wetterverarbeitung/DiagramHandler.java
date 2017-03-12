@@ -27,7 +27,7 @@ import static nfk.bluetooth.arduino.wetterverarbeitung.Views.DiagramFragment.sec
 
 /**
  * @author KI
- * @version 1.1
+ * @version 1.2
  **/
 
 public class DiagramHandler extends Handler implements DiagramFragment.RefreshListener, ArduinoBluetoothClient.OnReceiveListener {
@@ -74,6 +74,11 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         this.sendMessage(msg);
     }
 
+    /**
+     * Called when an Fragment was notified, that it should be updated and is now prepared for new Data.
+     *
+     * @param requester The Fragment sending the request.
+     */
     @Override
     public void onRefreshRequest(DiagramFragment requester) {  //This method provides the Fragment with Data as needed
         if (isLogEnabled()) Log.i(LOG_TAG, "Refreshing Diagram");
@@ -114,6 +119,10 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         }
     }
 
+    /**
+     * Notifies this DiagramHandler of the ActivityLifecycle-Callback onStart.
+     * Will load Bluetooth data.
+     */
     public void notifyOnStart() {
         try {
             m_bluetoothData = (Vector<BluetoothDataSet>) m_dataProvider.readData();
@@ -123,12 +132,20 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         prepareLists(m_bluetoothData.size());
     }
 
+    /**
+     * Notifies this DiagramHandler of the ActivityLifecycle-Callback onStop.
+     * Will save Bluetooth data, and clear memory of unused Lists.
+     */
     public void notifyOnStop() {
         m_dataProvider.writeData(m_bluetoothData);
         m_bluetoothData.clear();
         clearDataLists();
     }
 
+    /**
+     * Called, when Settings have changed, which are used by this DiagramHandler.
+     * @param maxBack The Maximum Value in ms, of which Diagram values should be drawn.
+     */
     public void notifySettingsChanged(int maxBack) {
         this.m_maxBack = maxBack;
     }
@@ -159,6 +176,10 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         return logEnabled;
     }
 
+    /**
+     * Sends the updateDiagram Event to the current Fragment so that it can prepare itself for new Data.
+     * This Event is send from the Thread calling this Method, resulting in all Update Operations being made on the calling Thread from this Method.
+     */
     private void updateFragment() {
         m_viewedPosition = m_callback.getCurrentFragmentPosition();
         final DiagramFragment fragment = m_SectionsPagerAdapter.getSavedFragmentFromPosition(m_viewedPosition);
@@ -169,6 +190,9 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         }
     }
 
+    /**
+     * processes BluetoothData, so that only the Data is added, which is within the Boundaries of maxBack.
+     */
     private void processData() {
         Date current = Calendar.getInstance().getTime();
         if (m_maxBack > 0) {
@@ -187,6 +211,12 @@ public class DiagramHandler extends Handler implements DiagramFragment.RefreshLi
         }
     }
 
+    /**
+     * Adds the Diagram Entry's to the Lists.
+     * Clips the XValues, so that the newest Value is the closest to zero.
+     * @param dataSets The List of BluetoothDataSets, from which to evaluate the Entry Lists
+     * @param current The Current Time, to be used as the zero xValue.
+     */
     private void addEntries(@NonNull List<BluetoothDataSet> dataSets, Date current) {
         prepareLists(dataSets.size());
         if (!dataSets.isEmpty()) {

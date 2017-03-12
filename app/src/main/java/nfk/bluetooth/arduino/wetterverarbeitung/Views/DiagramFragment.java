@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -313,7 +314,9 @@ public class DiagramFragment extends Fragment {
         public void onRefreshRequest(DiagramFragment requester);
     }
 
-    private LineData createDataFromValues() {
+    private
+    @Nullable
+    LineData createDataFromValues() {
         if (values.isEmpty()) {
             return null;
         } else {
@@ -325,6 +328,11 @@ public class DiagramFragment extends Fragment {
         }
     }
 
+    /**
+     * Retrieves the Data Label for the current section Number.
+     *
+     * @return Diagram Name with the additional unit.
+     */
     private String getDataName() {
         switch (getSectionNumber()) {
             case DIAGRAM_SECTIONNUMBER_RAIN: {
@@ -346,12 +354,18 @@ public class DiagramFragment extends Fragment {
         }
     }
 
+    /**
+     * Adds all LimitLines, which are registered in the List to the Diagram.
+     * Sets values like TextSize, which apply to any LimitLine.
+     */
     private void setLimitLines() {
-        YAxis axis = shownDiagram.getAxisLeft();
-        for (LimitLine l :
-                limitLines) {
-            l.setTextSize(9);
-            axis.addLimitLine(l);
+        if (shownDiagram != null) {
+            YAxis axis = shownDiagram.getAxisLeft();
+            for (LimitLine l :
+                    limitLines) {
+                l.setTextSize(9);
+                axis.addLimitLine(l);
+            }
         }
     }
 
@@ -392,19 +406,30 @@ public class DiagramFragment extends Fragment {
             formatter = (DecimalFormat) DecimalFormat.getInstance();
         }
 
+        /**
+         * Calculates the timeFormat to be used for the given value in Milliseconds.
+         * @param valueInMs The given value, for which the TimeFormat should be chosen
+         * @return The calculated TimeFormat
+         */
         TimeFormat chooseFormat(float valueInMs) {
             float value = valueInMs / 1000;  //formats into seconds
-            if (value < SECONDS_TO_MINUTES * 2) {
+            if (value <= SECONDS_TO_MINUTES * 2) {
                 return TimeFormat.SECONDS;
-            } else if (value < SECONDS_TO_HOURS * 2) {
+            } else if (value <= SECONDS_TO_HOURS * 2) {
                 return TimeFormat.MINUTES;
-            } else if (value < SECONDS_TO_DAYS * 2) {
+            } else if (value <= SECONDS_TO_DAYS * 2) {
                 return TimeFormat.HOURS;
             } else {
                 return TimeFormat.DAYS;
             }
         }
 
+        /**
+         *
+         * @param value The value which should be formatted
+         * @param axis The axis on which the value should be drawn
+         * @return A value formatted, as defined by the timeFormat member variable
+         */
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
             axis.setAxisMinimum(0f);

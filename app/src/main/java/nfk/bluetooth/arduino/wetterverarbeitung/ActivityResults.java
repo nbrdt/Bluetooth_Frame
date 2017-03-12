@@ -15,9 +15,22 @@ public interface ActivityResults {
     public static final int RESULT_ERROR = -42; //42 is best -> -42 is worst ;)
     public static final String RESULTKEY_ERROR_MESSAGE = "Error Message";
 
+    /**
+     * Sets The Activity Result to RESULT_ERROR with an Intent containing message with the Key RESULTKEY_ERROR_MESSAGE.
+     *
+     * @param message The Result Error message to be passed to the calling Activity
+     */
     public void setErrorMessage(String message);
 
+    /**
+     * Sets the Activity Result as defined by setErrorMessage and finishes the Activity afterwards.
+     * @param message The Result Error message to be passed to the calling Activity
+     */
     public void finishWithError(String message);
 
+    /**
+     * Shows an Activity Error, received in an Intent defined by setErrorMessage.
+     * @param errorMessage An Intent containing the Error Message to display.
+     */
     public void showActivityError(Intent errorMessage);
 }
