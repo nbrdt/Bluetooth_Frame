@@ -1,5 +1,6 @@
 package nfk.bluetooth.arduino.wetterverarbeitung.Views;
 
+import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,10 +16,12 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.List;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.LimitLine;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -44,20 +47,21 @@ public class DiagramFragment extends Fragment {
     public static final int DIAGRAM_SECTIONNUMBER_LIGHT = 4;
     private static final String LOG_TAG = "Diagram Fragment";
 
-    private DiagramViewSettings viewSettings;
+    private static final String ARG_SECTION_NUMBER = "section_number";
+    private static final String ARG_VIEWSETTINGS = "view_settings";
+    //attributes
     private int sectionNumber;
+    private DiagramViewSettings viewSettings;
     private RefreshListener refresher;
-
+    private ArrayList<Entry> values;
+    private LinkedList<LimitLine> limitLines;
+    private TimeValueFormatter xValueFormatter;
+    private TimeFormat timeFormat = TimeFormat.SECONDS;
+    //views
     private LineChart shownDiagram;
     LinearLayout layout;
 
-    private ArrayList<Entry> values;
-
-    private static final String ARG_SECTION_NUMBER = "section_number";
-    private static final String ARG_VIEWSETTINGS = "view_settings";
-    private TimeFormat timeFormat = TimeFormat.SECONDS;
-
-    public enum TimeFormat {
+    private enum TimeFormat {
         SECONDS,
         MINUTES,
         HOURS,
@@ -102,11 +106,26 @@ public class DiagramFragment extends Fragment {
     }
 
 
+    /**
+     * Called when a fragment is first attached to its context.
+     * {@link #onCreate(Bundle)} will be called after this.
+     *
+     * @param context
+     */
+    @Override
+    public void onAttach(Context context) {
+        xValueFormatter = new TimeValueFormatter();
+        super.onAttach(context);
+    }
+
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-
+        if (limitLines != null) {
+            limitLines.clear();
+        }
+        limitLines = new LinkedList<>();
         Bundle args = getArguments();
         viewSettings = DiagramViewSettings.createFromBundle(args.getBundle(ARG_VIEWSETTINGS));
         final View rootView;
@@ -156,28 +175,88 @@ public class DiagramFragment extends Fragment {
                     }
                     case (DIAGRAM_SECTIONNUMBER_RAIN): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.soilmoisture_line_chart);
+                        LimitLine feucht = new LimitLine(45);
+                        feucht.setLabel("Kaum Regen");
+                        feucht.setLineColor(Color.CYAN);
+                        LimitLine nass = new LimitLine(65);
+                        nass.setLabel("Stark Regen");
+                        nass.setLineColor(Color.BLUE);
+                        limitLines.add(feucht);
+                        limitLines.add(nass);
                         break;
                     }
                     case (DIAGRAM_SECTIONNUMBER_LIGHT): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.brightness_line_chart);
+                        LimitLine wachstumsgrenze = new LimitLine(400);  //vgl. http://www.green24.de/Gartenbedarf-Technik/Anzucht-Vermehrung/Messgeraete/LuxMesser-LuxMessgeraet-fuer-Pflanzen.html
+                        wachstumsgrenze.setLabel("Vollschatten Pflanzen");
+                        wachstumsgrenze.setLineColor(Color.DKGRAY);
+                        LimitLine halbschattenGrenze = new LimitLine(600);
+                        halbschattenGrenze.setLabel("Schatten bis Halb Schatten");
+                        halbschattenGrenze.setLineColor(Color.GRAY);
+                        LimitLine normaleAnforderungen = new LimitLine(800);
+                        normaleAnforderungen.setLabel("Halbschatten bis sonnig");
+                        normaleAnforderungen.setLineColor(Color.LTGRAY);
+                        LimitLine sonnigerStandort = new LimitLine(1000);
+                        sonnigerStandort.setLabel("Vollsonniger Standort");
+                        sonnigerStandort.setLineColor(Color.YELLOW);
+                        limitLines.add(wachstumsgrenze);
+                        limitLines.add(halbschattenGrenze);
+                        limitLines.add(normaleAnforderungen);
+                        limitLines.add(sonnigerStandort);
                         break;
                     }
                     case (DIAGRAM_SECTIONNUMBER_TEMP): {
                         shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);
+                        LimitLine wachstumsgrenze = new LimitLine(5); //vgl. http://www.ecotronics.ch/blumen/keimverhalten.aspx?AspxAutoDetectCookieSupport=1#Suche
+                        wachstumsgrenze.setLabel("Kaum eine Pflanze keimt bei dieser Temperatur");
+                        wachstumsgrenze.setLineColor(Color.BLUE);
+                        LimitLine untererKeimbereich = new LimitLine(12);
+                        untererKeimbereich.setLabel("Kaltkeimer");
+                        untererKeimbereich.setLineColor(Color.CYAN);
+                        LimitLine gemaeßigterKeimbereich = new LimitLine(20);
+                        gemaeßigterKeimbereich.setLabel("Keimbereich für Pflanzen aus gemäßigten Breiten");
+                        gemaeßigterKeimbereich.setLineColor(Color.YELLOW);
+                        LimitLine warmKeimer = new LimitLine(25);
+                        warmKeimer.setLabel("Kaum Pflanzen brauchen oder wollen derartig hohe Keimtemperaturen");
+                        warmKeimer.setLineColor(Color.RED);
+                        limitLines.add(wachstumsgrenze);
+                        limitLines.add(untererKeimbereich);
+                        limitLines.add(gemaeßigterKeimbereich);
+                        limitLines.add(warmKeimer);
                         break;
                     }
                     default: {
                         Log.w(LOG_TAG, "Could not identify Section number. Using Temperature Line chart.");
                         shownDiagram = (LineChart) rootView.findViewById(R.id.temperature_line_chart);  //this one might return null
+                        LimitLine wachstumsgrenze = new LimitLine(5);
+                        wachstumsgrenze.setLabel("Kaum eine Pflanze keimt bei dieser Temperatur");
+                        wachstumsgrenze.setLineColor(Color.BLUE);
+                        LimitLine untererKeimbereich = new LimitLine(12);
+                        untererKeimbereich.setLabel("Kaltkeimer");
+                        untererKeimbereich.setLineColor(Color.CYAN);
+                        LimitLine gemaeßigterKeimbereich = new LimitLine(20);
+                        gemaeßigterKeimbereich.setLabel("Keimbereich für Pflanzen aus gemäßigten Breiten");
+                        gemaeßigterKeimbereich.setLineColor(Color.YELLOW);
+                        LimitLine warmKeimer = new LimitLine(25);
+                        warmKeimer.setLabel("Kaum Pflanzen brauchen oder wollen derartig hohe Keimtemperaturen");
+                        warmKeimer.setLineColor(Color.RED);
+                        limitLines.add(wachstumsgrenze);
+                        limitLines.add(untererKeimbereich);
+                        limitLines.add(gemaeßigterKeimbereich);
+                        limitLines.add(warmKeimer);
                         break;
                     }
                 }
                 if (shownDiagram != null) {  //so we have to look for null values
+                    Description description = new Description();
+                    description.setEnabled(false);
+                    shownDiagram.setDescription(description);
                     shownDiagram.setBackgroundColor(Color.WHITE);
                     shownDiagram.setDragDecelerationEnabled(false);
                     shownDiagram.setLogEnabled(false);
-                    shownDiagram.getXAxis().setValueFormatter(new TimeValueFormatter());
+                    shownDiagram.getXAxis().setValueFormatter(xValueFormatter);
                     shownDiagram.setNoDataText("No Received Data available yet");
+                    setLimitLines();
                 }
                 updateDiagram();
             }
@@ -195,8 +274,7 @@ public class DiagramFragment extends Fragment {
     }
 
     public void resetFormat(BigDecimal maxValue) {
-        TimeValueFormatter formatter = new TimeValueFormatter();
-        this.timeFormat = formatter.chooseFormat(maxValue.floatValue());
+        this.timeFormat = xValueFormatter.chooseFormat(maxValue.floatValue());
     }
 
     public void updateDiagram() {  //updates the Diagram view
@@ -265,6 +343,15 @@ public class DiagramFragment extends Fragment {
                 Log.w(LOG_TAG, "Could not identify Section number. Using Temperature Data Name");
                 return DIAGRAM_NAME_TEMP + " in °C";
             }
+        }
+    }
+
+    private void setLimitLines() {
+        YAxis axis = shownDiagram.getAxisLeft();
+        for (LimitLine l :
+                limitLines) {
+            l.setTextSize(9);
+            axis.addLimitLine(l);
         }
     }
 
